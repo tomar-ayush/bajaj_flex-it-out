@@ -1,23 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
+import logo from "@/public/logo.png";
 import {
-  LayoutDashboard,
   Camera,
   Gift,
-  Trophy,
-  Settings,
+  LayoutDashboard,
   LogOut,
   Menu,
-  X,
+  Settings,
+  Trophy,
   User,
+  X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { ThemeToggle } from "./theme-toggle";
-import logo from "@/public/logo.png";
-import Image from "next/image";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -64,8 +64,11 @@ export function Sidebar() {
       <div className="flex md:hidden bg-card border-b p-4 items-center justify-between">
         <div className="flex items-center gap-2">
         <div className="flex items-center font-semibold text-xl">
+          
             <Image src={logo} alt="logo" width={25} height={25} className="mr-2" />
+            <Link href="/">
             FlexIt<span className="text-blue-500">Out</span>.
+            </Link>
           </div>
         </div>
         <button onClick={toggleMobileMenu} className="text-muted-foreground">
@@ -113,8 +116,11 @@ export function Sidebar() {
       <div className="hidden md:flex h-full flex-col bg-card">
         <div className="flex h-16 items-center gap-2 border-b px-6">
           <div className="flex items-center font-semibold text-lg">
+         
             <Image src={logo} alt="logo" width={25} height={25} className="mr-2" />
+            <Link href="/">
             FlexIt<span className="text-blue-500">Out</span>.
+            </Link>
           </div>
         </div>
         <div className="flex-1 space-y-1 px-3 py-4">
