@@ -1,9 +1,6 @@
 import mongoose from "mongoose";
 
-const mongo_uri = "mongodb+srv://ayush:S3yBpJGHoqsleUUd@cluster0.dshhxiv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-
-{/* const mongo_uri = process.env.MONGO_URI */ }
-
+const mongo_uri = process.env.MONGO_URI
 
 const connectDB = async () => {
   const connection = await mongoose.connection.readyState;
