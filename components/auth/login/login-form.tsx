@@ -32,7 +32,7 @@ export function LoginForm({
     } else {
       // Optionally, redirect after a successful login (e.g., using next/navigation's useRouter)
       // router.push("/dashboard");
-      NextResponse.redirect(new URL("/dashboard"))
+      window.location.href = "/dashboard";
     }
   };
 
@@ -61,7 +61,7 @@ export function LoginForm({
           <Input
             id="email"
             type="email"
-            placeholder="m@example.com"
+            placeholder="me@example.com"
             required
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
@@ -109,7 +109,7 @@ export function LoginForm({
       </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
-        <a href="#" className="underline underline-offset-4">
+        <a href="/register" className="underline underline-offset-4">
           Sign up
         </a>
       </div>

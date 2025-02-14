@@ -11,8 +11,10 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
+  const [name, setName] = useState("")
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [cpassword, setCPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // Handle credentials login
@@ -20,19 +22,30 @@ export function RegisterForm({
     e.preventDefault();
     setError(null);
 
-    const res = await signIn("credentials", {
-      redirect: false, // You can choose to redirect manually after successful login.
+    const res = await fetch("/api/auth/register", { method: "POST", body: JSON.stringify({ name, email: identifier, password }) })
+
+    const data = await res.json()
+    if (res?.status != 201) {
+      console.log(res)
+      setError(data.message || "error while registration");
+      return;
+    }
+
+    const signInResponse = await signIn("credentials", {
+      redirect: false,
       identifier,
       password,
     });
 
-    if (res?.error) {
-      setError(res.error);
+    if (signInResponse?.error) {
+      setError("Sign-in failed after registration");
     } else {
-      // Optionally, redirect after a successful login (e.g., using next/navigation's useRouter)
-      // router.push("/dashboard");
-      NextResponse.redirect(new URL("/dashboard"))
+      // On successful sign in, you can redirect as needed
+      window.location.href = "/dashboard";
     }
+
+
+
   };
 
   // Handle login with Google
@@ -55,15 +68,15 @@ export function RegisterForm({
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <div className="grid gap-6">
-      <div className="grid gap-2">
+        <div className="grid gap-2">
           <Label htmlFor="name">Name</Label>
           <Input
             id="name"
             type="text"
-            placeholder="Ayush Pratap"
+            placeholder="Your Full Name"
             required
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
         </div>
         <div className="grid gap-2">
@@ -71,7 +84,7 @@ export function RegisterForm({
           <Input
             id="email"
             type="email"
-            placeholder="aryan1372.be22@chitkar.edu.in"
+            placeholder="example@gmail.com"
             required
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
@@ -99,14 +112,14 @@ export function RegisterForm({
         <div className="grid gap-2">
           <div className="flex items-center">
             <Label htmlFor="cpassword">Confirm Password</Label>
-           
+
           </div>
           <Input
             id="cpassword"
             type="password"
             required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={cpassword}
+            onChange={(e) => setCPassword(e.target.value)}
           />
         </div>
 
@@ -134,7 +147,7 @@ export function RegisterForm({
       </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
-        <a href="#" className="underline underline-offset-4">
+        <a href="/login" className="underline underline-offset-4">
           Sign up
         </a>
       </div>
