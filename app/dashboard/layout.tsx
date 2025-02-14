@@ -2,7 +2,6 @@ import { ThemeProvider } from "@/components/dashboard/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
-import "./globals.css";
 
 
 const inter = Outfit({ subsets: ["latin"] });
@@ -12,7 +11,7 @@ export const metadata: Metadata = {
   description: "Flex It Out",
 };
 
-export default function RootLayout({
+export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -20,8 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en">
        <body className={inter.className}>
+       <ThemeProvider attribute="class" defaultTheme="dark">
           {children}
           <Toaster />
+        </ThemeProvider>
     </body>
     </html>
   );
