@@ -2,6 +2,7 @@ import { ThemeProvider } from "@/components/dashboard/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { Providers } from "./providers/page";
 import "./globals.css";
 
 

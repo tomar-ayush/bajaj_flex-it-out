@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: "Flex It Out",
 };
 
+
+
 export default function LoginPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
