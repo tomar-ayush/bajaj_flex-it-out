@@ -5,8 +5,10 @@ import { User } from "@/models/user";
 
 export async function POST(req: Request) {
 	await connectDB();
+	console.log("register called")
 	try {
 		const { name, email, password } = await req.json();
+		console.log("password: " + password)
 
 		//check for valid entries
 
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
 
 		// Create the user
 		try {
-			User.create({ name, email, hashedPassword })
+			await User.create({ name, email, password: hashedPassword })
 		} catch (err) {
 			console.log("error while creting user" + err);
 		}
