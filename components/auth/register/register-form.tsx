@@ -12,6 +12,7 @@ export function RegisterForm({
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
   const [name, setName] = useState("")
+  const [otp, setOtp] = useState("")
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [cpassword, setCPassword] = useState("");
@@ -22,7 +23,7 @@ export function RegisterForm({
     e.preventDefault();
     setError(null);
 
-    const res = await fetch("/api/auth/register", { method: "POST", body: JSON.stringify({ name, email: identifier, password }) })
+    const res = await fetch("/api/auth/register", { method: "POST", body: JSON.stringify({ name, email: identifier, password, otp }) })
 
     const data = await res.json()
     if (res?.status != 201) {
@@ -55,6 +56,13 @@ export function RegisterForm({
       callbackUrl: "/dashboard",
     });
   };
+
+  const sendOtp = async () => {
+    const req = await fetch("/api/auth/send-otp", { method: "POST", body: JSON.stringify({ email: identifier }) })
+    if (req.ok) {
+      window.alert("otp sent")
+    }
+  }
 
   return (
     <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
@@ -90,6 +98,26 @@ export function RegisterForm({
             onChange={(e) => setIdentifier(e.target.value)}
           />
         </div>
+        <div className="grid gap-2">
+          <Label htmlFor="otp">OTP</Label>
+          <Input
+            id="otp"
+            placeholder="Enter 6-digit OTP"
+            type="text"
+            maxLength={6}
+            required
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+          />
+          <Button
+            type="button"
+            onClick={sendOtp}
+            className="bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-600"
+          >
+            Send OTP
+          </Button>
+        </div>
+
         <div className="grid gap-2">
           <div className="flex items-center">
             <Label htmlFor="password">Password</Label>

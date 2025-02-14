@@ -3,12 +3,34 @@ import bcrypt from "bcryptjs";
 import connectDB from "@/utils/db";
 import { User } from "@/models/user";
 
+const checkOtp = async (otp: string, email: string) => {
+
+	console.log("otp called")
+
+	try {
+
+		const response = await fetch('http://localhost:3000/api/auth/verify-otp', { method: "POST", body: JSON.stringify({ otp, email }) });
+
+		const data = await response.json();
+
+		return data.valid;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
+
+}
+
+
+
 export async function POST(req: Request) {
 	await connectDB();
-	console.log("register called")
+
+
+
+
 	try {
-		const { name, email, password } = await req.json();
-		console.log("password: " + password)
+		const { name, email, password, otp } = await req.json();
 
 		//check for valid entries
 
@@ -18,6 +40,13 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "User already exists" }, { status: 400 });
 		}
 
+		//check if the otp matches
+		const isOtpCorrect = await checkOtp(otp, email);
+		if (!isOtpCorrect) {
+			return NextResponse.json({ error: "Invalid OTP" }, { status: 401, headers: { 'Content-Type': 'application/json' } });
+		}
+
+		console.log("otp verified")
 		// Hash the password
 		const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -27,6 +56,8 @@ export async function POST(req: Request) {
 		} catch (err) {
 			console.log("error while creting user" + err);
 		}
+
+		console.log("user created")
 
 
 		return NextResponse.json({ message: "User registered successfully" }, { status: 201 });
