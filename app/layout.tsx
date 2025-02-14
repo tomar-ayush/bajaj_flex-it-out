@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bajaj | Flex It Out",
+  title: "Flex It Out | Bajaj",
   description: "Flex It Out",
 };
 
