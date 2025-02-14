@@ -58,16 +58,10 @@ export const authOptions: NextAuthOptions = {
 	callbacks: {
 		async session({ session, token }) {
 			// Optionally attach additional properties from token
-			if (token) {
-				session.user = { ...session.user, id: token.id };
-			}
 			return session;
 		},
 		async jwt({ token, user }) {
 			// On first sign in, add user id to token
-			if (user) {
-				token.id = user._id;
-			}
 			return token;
 		},
 	},
