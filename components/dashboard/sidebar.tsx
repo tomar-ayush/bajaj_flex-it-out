@@ -18,6 +18,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "./theme-toggle";
+import { NextResponse } from "next/server";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -33,6 +34,16 @@ export function Sidebar() {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "GET" });
+
+      window.location.href = "/"
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   // Dummy user info – replace these with actual user data.
   const user = {
@@ -63,11 +74,11 @@ export function Sidebar() {
       {/* Mobile Top Navigation */}
       <div className="flex md:hidden bg-card border-b p-4 items-center justify-between">
         <div className="flex items-center gap-2">
-        <div className="flex items-center font-semibold text-xl">
-          
+          <div className="flex items-center font-semibold text-xl">
+
             <Image src={logo} alt="logo" width={25} height={25} className="mr-2" />
             <Link href="/">
-            FlexIt<span className="text-blue-500">Out</span>.
+              FlexIt<span className="text-blue-500">Out</span>.
             </Link>
           </div>
         </div>
@@ -104,7 +115,7 @@ export function Sidebar() {
           })}
           <div className="flex items-center justify-between border-t pt-2">
             <ThemeToggle />
-            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={handleLogout} >
               <LogOut className="h-5 w-5" />
               Logout
             </button>
@@ -116,10 +127,10 @@ export function Sidebar() {
       <div className="hidden md:flex h-full flex-col bg-card">
         <div className="flex h-16 items-center gap-2 border-b px-6">
           <div className="flex items-center font-semibold text-lg">
-         
+
             <Image src={logo} alt="logo" width={25} height={25} className="mr-2" />
             <Link href="/">
-            FlexIt<span className="text-blue-500">Out</span>.
+              FlexIt<span className="text-blue-500">Out</span>.
             </Link>
           </div>
         </div>
@@ -170,6 +181,7 @@ export function Sidebar() {
                   className="w-full rounded-md px-4 py-2 text-left hover:bg-accent hover:text-accent-foreground"
                   onClick={() => {
                     setProfileModalOpen(false);
+                    handleLogout()
                     // Insert your logout logic here
                   }}
                 >
