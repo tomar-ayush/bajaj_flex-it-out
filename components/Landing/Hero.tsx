@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const Hero = () => {
+export const Hero = () => {
   return (
     <div className="">
       <section className="pt-12 bg-gradient-to-b from-gray-50 via-white to-gray-50">
@@ -106,4 +106,3 @@ const Hero = () => {
     </div>
   );
 };
-export default Hero;
