@@ -1,10 +1,10 @@
 "use client";
 import { Card } from "@/components/ui/card";
-import { Camera, Trophy } from "lucide-react";
-import { Button } from "../ui/button";
+import { toast } from "@/hooks/use-toast";
 import { useExerciseCounter } from "@/lib/useExerciseCounter";
-import { useState, useEffect } from "react";
-import { toast } from "@/hooks/use-toast"; // For milestone toasts
+import { Camera, Trophy } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
 
 export function LiveTracking() {
   const { exerciseState, videoRef, canvasRef } = useExerciseCounter();
