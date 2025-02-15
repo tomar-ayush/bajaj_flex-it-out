@@ -4,59 +4,61 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
 const checkOtp = async (otp: string, email: string) => {
+  console.log("otp called");
 
-	console.log("otp called")
+  try {
+    const response = await fetch(`${process.env.PORT}/api/auth/verify-otp`, {
+      method: "POST",
+      body: JSON.stringify({ otp, email }),
+    });
 
-	try {
+    const data = await response.json();
 
-		const response = await fetch(`${process.env.PORT}/api/auth/verify-otp`, { method: "POST", body: JSON.stringify({ otp, email }) });
-
-		const data = await response.json();
-
-		return data.valid;
-	} catch (error) {
-		console.error(error);
-		return false;
-	}
-
-}
-
-
+    return data.valid;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
 
 export async function POST(req: Request) {
-	await connectDB();
+  await connectDB();
 
+  try {
+    const { name, email, password, otp } = await req.json();
 
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "User already exists" },
+        { status: 400 }
+      );
+    }
 
+    const isOtpCorrect = await checkOtp(otp, email);
+    if (!isOtpCorrect) {
+      return NextResponse.json(
+        { error: "Invalid OTP" },
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
-	try {
-		const { name, email, password, otp } = await req.json();
+    console.log("otp verified");
+    const hashedPassword = await bcrypt.hash(password, 10);
 
+    try {
+      await User.create({ name, email, password: hashedPassword });
+    } catch (err) {
+      console.log("error while creting user" + err);
+    }
 
-		const existingUser = await User.findOne({ email });
-		if (existingUser) {
-			return NextResponse.json({ error: "User already exists" }, { status: 400 });
-		}
+    console.log("user created");
 
-		const isOtpCorrect = await checkOtp(otp, email);
-		if (!isOtpCorrect) {
-			return NextResponse.json({ error: "Invalid OTP" }, { status: 401, headers: { 'Content-Type': 'application/json' } });
-		}
-
-		console.log("otp verified")
-		const hashedPassword = await bcrypt.hash(password, 10);
-
-		try {
-			await User.create({ name, email, password: hashedPassword })
-		} catch (err) {
-			console.log("error while creting user" + err);
-		}
-
-		console.log("user created")
-
-
-		return NextResponse.json({ message: "User registered successfully" }, { status: 201 });
-	} catch (error) {
-		return NextResponse.json({ error }, { status: 500 });
-	}
+    return NextResponse.json(
+      { message: "User registered successfully" },
+      { status: 201 }
+    );
+  } catch (error) {
+    return NextResponse.json({ error }, { status: 500 });
+  }
 }
