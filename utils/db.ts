@@ -1,43 +1,40 @@
 import mongoose from 'mongoose';
 
-const mongo_uri = process.env.MONGO_URI;
+const mongo_uri:any = process.env.MONGO_URI;
 
 if (!mongo_uri) {
   throw new Error('Please define the MONGO_URI environment variable inside .env.local');
 }
 
-interface MongooseGlobal {
-  mongoose: {
-    conn: any;
-    promise: any;
-  };
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
 }
 
-declare const global: MongooseGlobal;
-
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+// Augment the global object to include mongoose cache
+declare global {
+  // eslint-disable-next-line no-var
+  var mongooseCache: MongooseCache;
 }
+
+// Initialize the cache if it doesn't exist
+global.mongooseCache = global.mongooseCache || { conn: null, promise: null };
 
 async function connectDB() {
-  if (cached.conn) {
-    return cached.conn;
+  if (global.mongooseCache.conn) {
+    return global.mongooseCache.conn;
   }
 
-  if (!cached.promise) {
+  if (!global.mongooseCache.promise) {
     const opts = {
       bufferCommands: false,
       dbName: 'Practice',
     };
 
-    cached.promise = mongoose.connect(mongo_uri as string, opts).then((mongoose) => {
-      return mongoose;
-    });
+    global.mongooseCache.promise = mongoose.connect(mongo_uri, opts).then((mongoose) => mongoose);
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
+  global.mongooseCache.conn = await global.mongooseCache.promise;
+  return global.mongooseCache.conn;
 }
 
 export default connectDB;
