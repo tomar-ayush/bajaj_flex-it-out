@@ -1,40 +1,46 @@
 import mongoose from 'mongoose';
 
+// Ensure the MONGO_URI environment variable is defined
 const mongo_uri:any = process.env.MONGO_URI;
-
 if (!mongo_uri) {
   throw new Error('Please define the MONGO_URI environment variable inside .env.local');
 }
 
-interface MongooseCache {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
-}
-
-// Augment the global object to include mongoose cache
+// Extend the global interface to include mongooseCache
 declare global {
-  // eslint-disable-next-line no-var
-  var mongooseCache: MongooseCache;
+  var mongooseCache: {
+    conn: mongoose.Connection | null;
+    promise: Promise<mongoose.Connection> | null;
+  };
 }
 
-// Initialize the cache if it doesn't exist
-global.mongooseCache = global.mongooseCache || { conn: null, promise: null };
+// Initialize mongooseCache if it doesn't exist
+globalThis.mongooseCache = globalThis.mongooseCache || { conn: null, promise: null };
 
 async function connectDB() {
-  if (global.mongooseCache.conn) {
-    return global.mongooseCache.conn;
+  // If a connection is already established, return it
+  if (globalThis.mongooseCache.conn) {
+    return globalThis.mongooseCache.conn;
   }
 
-  if (!global.mongooseCache.promise) {
+  // If a connection promise doesn't exist, create one
+  if (!globalThis.mongooseCache.promise) {
     const opts = {
       bufferCommands: false,
       dbName: 'Practice',
     };
 
-    global.mongooseCache.promise = mongoose.connect(mongo_uri, opts).then((mongoose) => mongoose);
+    globalThis.mongooseCache.promise = mongoose.connect(mongo_uri, opts)
+      .then((mongoose) => mongoose.connection)
+      .catch((err) => {
+        console.error("MongoDB Connection Error:", err);
+        throw new Error("MongoDB connection failed");
+      });
   }
-  global.mongooseCache.conn = await global.mongooseCache.promise;
-  return global.mongooseCache.conn;
+
+  // Await the promise to establish the connection
+  globalThis.mongooseCache.conn = await globalThis.mongooseCache.promise;
+  return globalThis.mongooseCache.conn;
 }
 
 export default connectDB;
