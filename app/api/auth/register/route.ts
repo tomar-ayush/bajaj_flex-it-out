@@ -9,7 +9,7 @@ const checkOtp = async (otp: string, email: string) => {
 
 	try {
 
-		const response = await fetch('http://localhost:3000/api/auth/verify-otp', { method: "POST", body: JSON.stringify({ otp, email }) });
+		const response = await fetch(`${process.env.PORT}/api/auth/verify-otp`, { method: "POST", body: JSON.stringify({ otp, email }) });
 
 		const data = await response.json();
 
