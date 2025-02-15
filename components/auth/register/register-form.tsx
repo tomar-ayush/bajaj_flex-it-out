@@ -1,76 +1,162 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { signIn } from "next-auth/react";
-import { NextResponse } from "next/server";
 import React, { useState } from "react";
+import { validateRegistrationForm } from "@/utils/validation-utils";
+
+interface FormErrors {
+  [key: string]: string;
+}
 
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
-  const [name, setName] = useState("")
-  const [otp, setOtp] = useState("")
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [cpassword, setCPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    identifier: "",
+    password: "",
+    cpassword: "",
+    otp: "",
+  });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+    // Clear error when user starts typing
+    if (errors[id]) {
+      setErrors((prev) => ({
+        ...prev,
+        [id]: "",
+      }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
+    setIsLoading(true);
 
-    const res = await fetch("/api/auth/register", { method: "POST", body: JSON.stringify({ name, email: identifier, password, otp }) })
+    // Validate form
+    const validationErrors = validateRegistrationForm(
+      formData.name,
+      formData.identifier,
+      formData.password,
+      formData.cpassword,
+      formData.otp
+    );
 
-    const data = await res.json()
-    if (res?.status != 201) {
-      console.log(res)
-      setError(data.message || "error while registration");
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setIsLoading(false);
       return;
     }
 
-    const signInResponse = await signIn("credentials", {
-      redirect: false,
-      identifier,
-      password,
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.identifier,
+          password: formData.password,
+          otp: formData.otp,
+        }),
+      });
 
-    if (signInResponse?.error) {
-      setError("Sign-in failed after registration");
-    } else {
+      const data = await res.json();
+
+      if (res.status !== 201) {
+        throw new Error(data.message || "Error during registration");
+      }
+
+      const signInResponse = await signIn("credentials", {
+        redirect: false,
+        identifier: formData.identifier,
+        password: formData.password,
+      });
+
+      if (signInResponse?.error) {
+        throw new Error("Sign-in failed after registration");
+      }
+
       window.location.href = "/dashboard";
+    } catch (error) {
+      setErrors({
+        submit: error instanceof Error ? error.message : "An error occurred",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-
-
   };
 
-  const handleGoogleLogin = async () => {
-    await signIn("google", {
+  const handleGoogleLogin = () => {
+    signIn("google", {
       redirect: true,
       callbackUrl: "/dashboard",
     });
   };
 
   const sendOtp = async () => {
-    const req = await fetch("/api/auth/send-otp", { method: "POST", body: JSON.stringify({ email: identifier }) })
-    if (req.ok) {
-      window.alert("otp sent")
+    if (!formData.identifier) {
+      setErrors({ identifier: "Please enter an email address first" });
+      return;
     }
-  }
+
+    try {
+      setIsLoading(true);
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: formData.identifier }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to send OTP");
+      }
+
+      setOtpSent(true);
+      window.alert("OTP sent successfully");
+    } catch (error) {
+      setErrors({
+        otp: error instanceof Error ? error.message : "Failed to send OTP",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
+    <form
+      onSubmit={handleSubmit}
+      className={cn("flex flex-col gap-6", className)}
+      {...props}
+    >
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Login to your account</h1>
+        <h1 className="text-2xl font-bold">Create an account</h1>
         <p className="text-balance text-sm text-muted-foreground">
-          Enter your email below to login to your account
+          Enter your details below to create your account
         </p>
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {errors.submit && (
+        <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {errors.submit}
+        </div>
+      )}
 
       <div className="grid gap-6">
         <div className="grid gap-2">
@@ -80,83 +166,115 @@ export function RegisterForm({
             type="text"
             placeholder="Your Full Name"
             required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={formData.name}
+            onChange={handleChange}
+            disabled={isLoading}
+            aria-invalid={!!errors.name}
           />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="example@gmail.com"
-            required
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="otp">OTP</Label>
-          <Input
-            id="otp"
-            placeholder="Enter 6-digit OTP"
-            type="text"
-            maxLength={6}
-            required
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-          />
-          <Button
-            type="button"
-            onClick={sendOtp}
-            className="bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-600"
-          >
-            Send OTP
-          </Button>
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name}</p>
+          )}
         </div>
 
         <div className="grid gap-2">
-          <div className="flex items-center">
-            <Label htmlFor="password">Password</Label>
-            <a
-              href="#"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
+          <Label htmlFor="identifier">Email</Label>
+          <Input
+            id="identifier"
+            type="email"
+            placeholder="example@gmail.com"
+            required
+            value={formData.identifier}
+            onChange={handleChange}
+            disabled={isLoading}
+            aria-invalid={!!errors.identifier}
+          />
+          {errors.identifier && (
+            <p className="text-sm text-red-500">{errors.identifier}</p>
+          )}
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="otp">OTP</Label>
+          <div className="flex gap-2">
+            <Input
+              id="otp"
+              placeholder="Enter 6-digit OTP"
+              type="text"
+              maxLength={6}
+              required
+              value={formData.otp}
+              onChange={handleChange}
+              disabled={isLoading || !otpSent}
+              aria-invalid={!!errors.otp}
+            />
+            <Button
+              type="button"
+              onClick={sendOtp}
+              disabled={isLoading || !formData.identifier}
+              className="whitespace-nowrap"
             >
-              Forgot your password?
-            </a>
+              {isLoading ? "Sending..." : otpSent ? "Resend OTP" : "Send OTP"}
+            </Button>
           </div>
+          {errors.otp && (
+            <p className="text-sm text-red-500">{errors.otp}</p>
+          )}
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="password">Password</Label>
           <Input
             id="password"
             type="password"
             required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
+            disabled={isLoading}
+            aria-invalid={!!errors.password}
           />
+          {errors.password && (
+            <p className="text-sm text-red-500">{errors.password}</p>
+          )}
         </div>
 
         <div className="grid gap-2">
-          <div className="flex items-center">
-            <Label htmlFor="cpassword">Confirm Password</Label>
-
-          </div>
+          <Label htmlFor="cpassword">Confirm Password</Label>
           <Input
             id="cpassword"
             type="password"
             required
-            value={cpassword}
-            onChange={(e) => setCPassword(e.target.value)}
+            value={formData.cpassword}
+            onChange={handleChange}
+            disabled={isLoading}
+            aria-invalid={!!errors.cpassword}
           />
+          {errors.cpassword && (
+            <p className="text-sm text-red-500">{errors.cpassword}</p>
+          )}
         </div>
 
-        <Button type="submit" className="w-full bg-blue-500">
-          Login
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? "Creating account..." : "Create account"}
         </Button>
-        <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-          <span className="relative z-10 bg-background px-2 text-muted-foreground">
+
+        <div className="relative text-center">
+          <span className="bg-background px-2 text-muted-foreground text-sm relative z-10">
             Or continue with
           </span>
+          <div className="absolute inset-0 top-1/2 border-t border-border -z-10" />
         </div>
-        <Button variant="outline" onClick={handleGoogleLogin} className="w-full">
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+          className="w-full"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -170,10 +288,11 @@ export function RegisterForm({
           Continue with Google
         </Button>
       </div>
+
       <div className="text-center text-sm">
-        Don&apos;t have an account?{" "}
-        <a href="/login" className="underline underline-offset-4">
-          Sign up
+        Already have an account?{" "}
+        <a href="/login" className="underline underline-offset-4 hover:text-primary">
+          Sign in
         </a>
       </div>
     </form>
