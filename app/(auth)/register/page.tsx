@@ -1,5 +1,5 @@
 import { RegisterForm } from "@/components/auth/register/register-form";
-import registerImage from "@/public/login-image.avif"; // Replace with registerImage if available
+import registerImage from "@/public/login-image.avif"; 
 import logo from "@/public/logo.png";
 import { Metadata } from "next";
 import Image from "next/image";
@@ -13,7 +13,6 @@ export const metadata: Metadata = {
 export default function RegisterPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      {/* Image Column (now on the left) */}
       <div className="relative hidden bg-muted lg:block">
         <Image
           src={registerImage}
@@ -22,7 +21,6 @@ export default function RegisterPage() {
         />
       </div>
 
-      {/* Form Column (now on the right) */}
       <div className="flex flex-col px-6 py-16 sm:mt-0 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <Link

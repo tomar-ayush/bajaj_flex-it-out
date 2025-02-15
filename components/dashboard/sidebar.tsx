@@ -45,14 +45,12 @@ export function Sidebar() {
     }
   };
 
-  // Dummy user info – replace these with actual user data.
   const user = {
     name: "John Doe",
     avatar:
       "https://avatars.githubusercontent.com/u/117257768?s=400&u=58fca1a27a28a0acd263ce4a026b32979d05cd56&v=4", // Replace with actual avatar URL or leave empty to show fallback icon.
   };
 
-  // Render the avatar: if user.avatar exists, show the image, otherwise fallback to the User icon.
   const renderAvatar = (size = "h-10 w-10") => {
     return user.avatar ? (
       <img
@@ -182,7 +180,7 @@ export function Sidebar() {
                   onClick={() => {
                     setProfileModalOpen(false);
                     handleLogout()
-                    // Insert your logout logic here
+                    // logout logic
                   }}
                 >
                   Logout

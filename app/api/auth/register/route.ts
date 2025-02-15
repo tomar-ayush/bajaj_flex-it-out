@@ -32,25 +32,20 @@ export async function POST(req: Request) {
 	try {
 		const { name, email, password, otp } = await req.json();
 
-		//check for valid entries
 
-		// Check if user already exists
 		const existingUser = await User.findOne({ email });
 		if (existingUser) {
 			return NextResponse.json({ error: "User already exists" }, { status: 400 });
 		}
 
-		//check if the otp matches
 		const isOtpCorrect = await checkOtp(otp, email);
 		if (!isOtpCorrect) {
 			return NextResponse.json({ error: "Invalid OTP" }, { status: 401, headers: { 'Content-Type': 'application/json' } });
 		}
 
 		console.log("otp verified")
-		// Hash the password
 		const hashedPassword = await bcrypt.hash(password, 10);
 
-		// Create the user
 		try {
 			await User.create({ name, email, password: hashedPassword })
 		} catch (err) {

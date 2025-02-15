@@ -16,13 +16,12 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Handle credentials login
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
     const res = await signIn("credentials", {
-      redirect: false, // You can choose to redirect manually after successful login.
+      redirect: false, 
       identifier,
       password,
     });
@@ -30,13 +29,11 @@ export function LoginForm({
     if (res?.error) {
       setError(res.error);
     } else {
-      // Optionally, redirect after a successful login (e.g., using next/navigation's useRouter)
       // router.push("/dashboard");
       window.location.href = "/dashboard";
     }
   };
 
-  // Handle login with Google
   const handleGoogleLogin = async () => {
     await signIn("google", {
       redirect: true,

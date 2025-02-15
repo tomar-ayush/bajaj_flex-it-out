@@ -21,7 +21,6 @@ const connectDB = async () => {
       bufferCommands: true,
     });
 
-    // The ! (non-null assertion operator) in TypeScript is used to tell the compiler that a variable that could be null or undefined is definitely not null or undefined at that point in the code. 
 
     console.log("MongoDB connected");
   }

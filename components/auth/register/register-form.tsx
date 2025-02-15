@@ -18,7 +18,6 @@ export function RegisterForm({
   const [cpassword, setCPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Handle credentials login
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -41,7 +40,6 @@ export function RegisterForm({
     if (signInResponse?.error) {
       setError("Sign-in failed after registration");
     } else {
-      // On successful sign in, you can redirect as needed
       window.location.href = "/dashboard";
     }
 
@@ -49,7 +47,6 @@ export function RegisterForm({
 
   };
 
-  // Handle login with Google
   const handleGoogleLogin = async () => {
     await signIn("google", {
       redirect: true,
