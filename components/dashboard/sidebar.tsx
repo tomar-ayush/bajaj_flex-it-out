@@ -18,7 +18,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "./theme-toggle";
-import { NextResponse } from "next/server";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },

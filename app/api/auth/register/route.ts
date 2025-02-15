@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import connectDB from "@/utils/db";
 import { User } from "@/models/user";
+import connectDB from "@/utils/db";
+import bcrypt from "bcryptjs";
+import { NextResponse } from "next/server";
 
 const checkOtp = async (otp: string, email: string) => {
 
@@ -57,6 +57,6 @@ export async function POST(req: Request) {
 
 		return NextResponse.json({ message: "User registered successfully" }, { status: 201 });
 	} catch (error) {
-		return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+		return NextResponse.json({ error }, { status: 500 });
 	}
 }

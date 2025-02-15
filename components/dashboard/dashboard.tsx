@@ -1,6 +1,5 @@
 import { Leaderboard } from "./leaderboard";
 import { LiveTracking } from "./live-tracking";
-import { RewardsSection } from "./rewards-section";
 import { Sidebar } from "./sidebar";
 import { UserOverview } from "./user-overview";
 

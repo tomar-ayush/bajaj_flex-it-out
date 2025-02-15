@@ -1,5 +1,5 @@
 "use client";
-import { toast } from "@/hooks/use-toast"; 
+import { toast } from "@/hooks/use-toast";
 import * as posedetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl";
@@ -20,10 +20,6 @@ export function calculateAngle(
   if (magBA === 0 || magBC === 0) return 0;
   const angleRad = Math.acos(dotProduct / (magBA * magBC));
   return (angleRad * 180) / Math.PI;
-}
-
-function getDistance(a: { x: number; y: number }, b: { x: number; y: number }): number {
-  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
 interface ExerciseState {
