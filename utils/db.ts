@@ -6,7 +6,6 @@ if (!mongo_uri) {
   throw new Error('Please define the MONGO_URI environment variable inside .env.local');
 }
 
-// Extend the global interface to include mongooseCache
 declare global {
   var mongooseCache: {
     conn: mongoose.Connection | null;
