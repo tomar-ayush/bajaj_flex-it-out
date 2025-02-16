@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
 			name: cookie.name,
 			path: "/",
 			domain: projectDomain,
+			secure: true
 		});
 	});
 
