@@ -1,26 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-	// Construct the redirect URL (using the request origin)
-	const response = NextResponse.redirect(new URL("/", request.url));
+	const url = new URL(request.url);
+	// Redirect back to the site’s origin.
+	const response = NextResponse.redirect(url.origin);
 
-	// Define your project domain explicitly for cookie deletion
-	const projectDomain = "bajaj-flex-it-out-chi.vercel.app";
+	// Set basic cookie deletion options.
+	// Adjust these based on how your cookies were set.
+	const cookieOptions: { path: string; domain?: string; secure?: boolean } = {
+		path: "/"
+	};
 
-	// Retrieve all cookies from the request
-	const allCookies = request.cookies.getAll();
+	// In production (HTTPS) add secure flag.
+	if (url.protocol === "https:") {
+		cookieOptions.secure = true;
+	}
 
-	// Delete each cookie with the specified domain and path
-	allCookies.forEach((cookie) => {
+	// If your cookies were set with a domain attribute, include it.
+	// Check in your browser what the cookie domain is and update accordingly.
+	// For example, if the cookies are set with domain "bajaj-flex-it-out-chi.vercel.app":
+	cookieOptions.domain = "bajaj-flex-it-out-chi.vercel.app";
+
+	// Loop over all cookies from the request and delete them with the same options.
+	request.cookies.getAll().forEach((cookie) => {
 		response.cookies.delete({
 			name: cookie.name,
-			path: "/",
-			domain: projectDomain,
-			secure: true
+			...cookieOptions,
 		});
 	});
-
-	request.cookies.delete("__Secure-next-auth.session-token")
 
 	return response;
 }
