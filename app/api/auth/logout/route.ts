@@ -16,10 +16,20 @@ export async function GET(request: NextRequest) {
 		...(domain !== "localhost" && { domain: `.${domain}` })
 	};
 
-	// Delete all next-auth cookies
-	response.cookies.set("next-auth.session-token", "", cookieOptions);
-	response.cookies.set("next-auth.csrf-token", "", cookieOptions);
-	response.cookies.set("next-auth.callback-url", "", cookieOptions);
+
+	const preserveCookies = new Set([
+		// Add any cookie names you want to preserve
+		// Example: "essential-cookie"
+		"essentals"
+	]);
+
+	// Clear all cookies except those in preserveCookies
+	request.cookies.getAll().forEach(cookie => {
+		if (!preserveCookies.has(cookie.name)) {
+			response.cookies.set(cookie.name, "", cookieOptions);
+		}
+	});
+
 
 	return response;
 }
