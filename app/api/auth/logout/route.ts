@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 		const hostname = url.hostname;
 		if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
 			cookieOptions.domain = hostname; // Use the full hostname (e.g., "bajaj-flex-it-out-chi.vercel.app")
-			console.log(hostname);
+			console.log("hostname: " + hostname);
 		}
 
 		// Delete all cookies with proper options
