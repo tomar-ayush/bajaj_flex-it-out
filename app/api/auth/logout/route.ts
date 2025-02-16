@@ -21,13 +21,15 @@ export async function GET(request: NextRequest) {
 	response.cookies.set("__Secure-next-auth.callback-url", "", cookieOptions);
 	response.cookies.set("__Secure-next-auth.pkce.code_verifier", "", cookieOptions);
 	response.cookies.set("__Secure-next-auth.state", "", cookieOptions);
+	*/
 
 	response.cookies.delete("__Secure-next-auth.session-token")
 	response.cookies.delete("__Host-next-auth.csrf-token")
 	response.cookies.delete("__Secure-next-auth.pkce.code_verifier")
 	response.cookies.delete("__Secure-next-auth.state")
 	response.cookies.delete("__Secure-next-auth.callback-url")
-	*/
+
+	// __Secure-next-auth.session-token
 
 
 
