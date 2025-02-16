@@ -1,60 +1,37 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { useExerciseCounter } from "@/lib/useExerciseCounter";
-import { Camera, Trophy } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ExerciseType, useExerciseCounter } from "@/lib/useExerciseCounter";
+import { useEffect } from "react";
 import { Button } from "../ui/button";
 
 export function LiveTracking() {
-  const { exerciseState, videoRef, canvasRef } = useExerciseCounter();
-  const [tracking, setTracking] = useState(false);
-  const [milestone, setMilestone] = useState<string | null>(null);
+  const {
+    exerciseCounts,
+    totalReps,
+    videoRef,
+    canvasRef,
+    enableDetection,
+    toggleCamera,
+    currExercise,
+    setCurrExercise,
+  } = useExerciseCounter();
 
+  // Show milestone toast for multiples of 10
   useEffect(() => {
-    if (exerciseState.squat > 0 && exerciseState.squat % 10 === 0) {
-      toast({ title: `Milestone: ${exerciseState.squat} Squats!`, variant: "success" });
-      setMilestone(`Milestone: ${exerciseState.squat} Squats!`);
-      setTimeout(() => setMilestone(null), 3000);
-    }
-  }, [exerciseState.squat]);
-  
-  useEffect(() => {
-    if (exerciseState.pushup > 0 && exerciseState.pushup % 10 === 0) {
-      toast({ title: `Milestone: ${exerciseState.pushup} Push-ups!`, variant: "success" });
-      setMilestone(`Milestone: ${exerciseState.pushup} Push-ups!`);
-      setTimeout(() => setMilestone(null), 3000);
-    }
-  }, [exerciseState.pushup]);
-  
-  useEffect(() => {
-    if (exerciseState.crunch > 0 && exerciseState.crunch % 10 === 0) {
-      toast({ title: `Milestone: ${exerciseState.crunch} Crunches!`, variant: "success" });
-      setMilestone(`Milestone: ${exerciseState.crunch} Crunches!`);
-      setTimeout(() => setMilestone(null), 3000);
-    }
-  }, [exerciseState.crunch]);
-  
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    async function initCamera() {
-      if (tracking && videoRef.current) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          videoRef.current.srcObject = stream;
-        } catch (error) {
-          console.error(error);
-        }
+    const checkMilestone = (name: ExerciseType, count: number) => {
+      if (count > 0 && count % 10 === 0) {
+        toast({ title: `Milestone: ${count} ${name}s!`, variant: "success" });
       }
-    }
-    initCamera();
-    return () => {
-      if (stream) stream.getTracks().forEach(track => track.stop());
     };
-  }, [tracking, videoRef]);
-  
-  const toggleTracking = () => setTracking(prev => !prev);
-  
+    checkMilestone("Squat", exerciseCounts.squat);
+    checkMilestone("Push-Up", exerciseCounts.pushup);
+    checkMilestone("Pull-Up", exerciseCounts.pullup);
+  }, [exerciseCounts]);
+
+  // We have 3 exercise options plus "No Count" toggles camera
+  const exerciseOptions: ExerciseType[] = ["Push-Up", "Pull-Up", "Squat"];
+
   return (
     <Card className="overflow-hidden">
       <div className="border-b p-6">
@@ -63,32 +40,68 @@ export function LiveTracking() {
           AI-powered exercise detection using TensorFlow.js MoveNet
         </p>
       </div>
-      <div className="relative bg-black/90 transform scale-90 md:scale-75 mx-auto">
-        <div className="absolute top-0 left-0 w-full bg-black bg-opacity-75 text-white p-2 flex justify-around z-10">
-          <span>Squats: {exerciseState.squat}</span>
-          <span>Push-ups: {exerciseState.pushup}</span>
-          <span>Crunches: {exerciseState.crunch}</span>
-        </div>
+
+      {/* Top row of 4 buttons */}
+      <div className="flex gap-2 p-4 justify-center">
+        {exerciseOptions.map((option) => (
+          <Button
+            key={option}
+            variant={currExercise === option ? "default" : "outline"}
+            onClick={() => setCurrExercise(option)}
+            size="sm"
+          >
+            {option}
+          </Button>
+        ))}
+        <Button
+          variant={!enableDetection ? "default" : "outline"}
+          onClick={toggleCamera}
+          size="sm"
+        >
+          {enableDetection ? "Stop Camera" : "No Count"}
+        </Button>
+      </div>
+
+      {/* Middle black bar: if an exercise is selected => show that count, else show total */}
+      <div className="border-t border-b p-4 flex justify-around text-white bg-black bg-opacity-75">
+        {currExercise ? (
+          <span>
+            {currExercise}s:{" "}
+            {currExercise === "Push-Up"
+              ? exerciseCounts.pushup
+              : currExercise === "Pull-Up"
+              ? exerciseCounts.pullup
+              : exerciseCounts.squat}
+          </span>
+        ) : (
+          <>
+            <span>Push-Ups: {exerciseCounts.pushup}</span>
+            <span>Pull-Ups: {exerciseCounts.pullup}</span>
+            <span>Squats: {exerciseCounts.squat}</span>
+            <span>Total: {totalReps}</span>
+          </>
+        )}
+      </div>
+
+      {/* Video + Canvas + center overlay toggle */}
+      <div
+        className="relative bg-black mx-auto"
+        style={{ width: "640px", height: "480px" }}
+      >
         <video
           ref={videoRef}
           autoPlay
           muted
           className="w-full h-full object-cover"
-          style={{ visibility: tracking ? "visible" : "hidden" }}
+          style={{ visibility: enableDetection ? "visible" : "hidden" }}
         />
         <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+        {/* Center overlay button */}
         <div className="absolute inset-0 flex items-center justify-center z-10">
-          <Button size="lg" className="gap-2" onClick={toggleTracking}>
-            <Camera className="h-5 w-5" />
-            {tracking ? "Stop Tracking" : "Start Tracking"}
+          <Button size="lg" className="gap-2" onClick={toggleCamera}>
+            {enableDetection ? "Stop Camera" : "Start Camera"}
           </Button>
         </div>
-        {milestone && (
-          <div className="absolute top-4 left-4 bg-green-500 text-white p-3 rounded-md shadow-md flex items-center gap-2 z-10">
-            <Trophy className="h-5 w-5" />
-            <span>{milestone}</span>
-          </div>
-        )}
       </div>
     </Card>
   );
