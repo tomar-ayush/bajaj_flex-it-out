@@ -4,7 +4,7 @@ export async function GET(request: NextRequest) {
 	try {
 		const url = new URL(request.url);
 
-		// Allow custom redirect through query parameter
+		// Allow custom redirect through query parameter (ensure you validate this if needed)
 		const redirectTo = request.nextUrl.searchParams.get('redirect') || url.origin;
 		const response = NextResponse.redirect(redirectTo);
 
@@ -18,26 +18,19 @@ export async function GET(request: NextRequest) {
 		} = {
 			path: "/",
 			httpOnly: true, // Prevents JavaScript access to cookies
-			sameSite: "lax", // Protects against CSRF
+			sameSite: "lax", // Default sameSite value
 		};
 
-		// In production (HTTPS) add secure flag
+		// In production (HTTPS) enforce secure cookies and adjust sameSite
 		if (url.protocol === "https:") {
 			cookieOptions.secure = true;
 			cookieOptions.sameSite = "strict";
 		}
 
-		// Dynamically determine domain based on environment
+		// Use the full hostname for production cookies
 		const hostname = url.hostname;
 		if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
-			// Extract root domain for production
-			const domainParts = hostname.split('.');
-			if (domainParts.length > 2) {
-				// Handle subdomains by using the main domain
-				cookieOptions.domain = domainParts.slice(-2).join('.');
-			} else {
-				cookieOptions.domain = hostname;
-			}
+			cookieOptions.domain = hostname; // Use the full hostname (e.g., "bajaj-flex-it-out-chi.vercel.app")
 		}
 
 		// Delete all cookies with proper options
@@ -56,7 +49,6 @@ export async function GET(request: NextRequest) {
 		return response;
 	} catch (error) {
 		console.error('Logout error:', error);
-		// Return a proper error response
 		return NextResponse.json(
 			{ error: 'Failed to process logout' },
 			{ status: 500 }
@@ -64,10 +56,9 @@ export async function GET(request: NextRequest) {
 	}
 }
 
-// Optional: Add rate limiting middleware
+// Optional: Add rate limiting middleware configuration if needed
 export const config = {
 	api: {
-		// Optionally add rate limiting configuration
 		// externalResolver: true,
 	},
 };
