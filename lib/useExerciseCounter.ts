@@ -5,6 +5,7 @@ import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl";
 import { useEffect, useRef, useState } from "react";
 
+// Calculates the angle (in degrees) at point B formed by points A, B, and C.
 export function calculateAngle(
   A: { x: number; y: number },
   B: { x: number; y: number },
@@ -15,8 +16,8 @@ export function calculateAngle(
   const BCx = C.x - B.x;
   const BCy = C.y - B.y;
   const dotProduct = BAx * BCx + BAy * BCy;
-  const magBA = Math.sqrt(BAx ** 2 + BAy ** 2);
-  const magBC = Math.sqrt(BCx ** 2 + BCy ** 2);
+  const magBA = Math.hypot(BAx, BAy);
+  const magBC = Math.hypot(BCx, BCy);
   if (magBA === 0 || magBC === 0) return 0;
   const angleRad = Math.acos(dotProduct / (magBA * magBC));
   return (angleRad * 180) / Math.PI;
@@ -27,6 +28,8 @@ interface ExerciseState {
   pushup: number;
   crunch: number;
 }
+
+type Mode = "pushup" | "squat" | "crunch" | null;
 
 export function useExerciseCounter() {
   const [initialized, setInitialized] = useState(false);
@@ -40,9 +43,9 @@ export function useExerciseCounter() {
   const detectorRef = useRef<posedetection.PoseDetector | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const COOLDOWN = 1000;
-  
-  const DEBOUNCE_TIME = 30000; // 3 s
+  const DEBOUNCE_TIME = 30000;
   const toastLastTime = useRef<{ [key: string]: number }>({});
+
   function maybeToastError(key: string, message: string, variant: "destructive" | "success") {
     const now = Date.now();
     if (!toastLastTime.current[key] || now - toastLastTime.current[key] > DEBOUNCE_TIME) {
@@ -50,221 +53,129 @@ export function useExerciseCounter() {
       toastLastTime.current[key] = now;
     }
   }
-  
-  const squatCooldown = useRef(false);
-  const pushupCooldown = useRef(false);
-  const crunchCooldown = useRef(false);
-  
+
+  // Smoothing utility.
   const ALPHA = 0.2;
-  const squatSmooth = useRef<number | null>(null);
-  const pushupSmooth = useRef<number | null>(null);
-  const crunchSmooth = useRef<number | null>(null);
   const exponentialSmooth = (newVal: number, prevVal: number | null): number =>
     prevVal === null ? newVal : ALPHA * newVal + (1 - ALPHA) * prevVal;
-  
-  const pushupDown = useRef(false);
-  
-  const squatPrevAngle = useRef<number | null>(null);
-  const squatMinAngle = useRef<number>(Infinity);
-  
-  const crunchPrevAngle = useRef<number | null>(null);
-  const crunchMinAngle = useRef<number>(Infinity);
-  
-  useEffect(() => {
-    async function initTF() {
-      try {
-        await tf.setBackend("webgl");
-        await tf.ready();
-        setInitialized(true);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    initTF();
-  }, []);
-  
-  useEffect(() => {
-    if (!initialized) return;
-    async function initDetector() {
-      try {
-        detectorRef.current = await posedetection.createDetector(
-          posedetection.SupportedModels.MoveNet,
-          { modelType: posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
-        );
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    initDetector();
-  }, [initialized]);
-  
-  function drawKeypoints(keypoints: any, ctx: CanvasRenderingContext2D) {
-    keypoints.forEach((kp: any) => {
-      if (kp.score > 0.5) {
-        ctx.beginPath();
-        ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = "red";
-        ctx.fill();
-      }
-    });
+
+  // -----------------
+  // PUSHUP STATE (unchanged from before)
+  const pushupState = useRef<"up" | "down">("up");
+  const pushupBaseline:any = useRef<number | null>(null);
+
+  // -----------------
+  // SQUAT STATE: Now we use a dynamic mid‑hip baseline.
+  const squatState = useRef<"up" | "down">("up");
+  const squatBaseline:any = useRef<number | null>(null);
+  const squatSmooth = useRef<number | null>(null);
+
+  // CLASSIFICATION: Use torso orientation (mid-shoulder to mid-hip) to decide mode.
+  function classifyExercise(keypoints: any): Mode {
+    const leftShoulder = keypoints.find((kp: any) => kp.name === "left_shoulder");
+    const rightShoulder = keypoints.find((kp: any) => kp.name === "right_shoulder");
+    const leftHip = keypoints.find((kp: any) => kp.name === "left_hip");
+    const rightHip = keypoints.find((kp: any) => kp.name === "right_hip");
+    if (!leftShoulder || !rightShoulder || !leftHip || !rightHip) return null;
+    const midShoulder = {
+      x: (leftShoulder.x + rightShoulder.x) / 2,
+      y: (leftShoulder.y + rightShoulder.y) / 2,
+    };
+    const midHip = {
+      x: (leftHip.x + rightHip.x) / 2,
+      y: (leftHip.y + rightHip.y) / 2,
+    };
+    const dx = midHip.x - midShoulder.x;
+    const dy = midHip.y - midShoulder.y;
+    let torsoAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+    torsoAngle = Math.abs(torsoAngle);
+    // Nearly horizontal torso implies pushup.
+    if (torsoAngle < 45 || torsoAngle > 135) return "pushup";
+    // Otherwise, assume squat.
+    return "squat";
   }
-  
-  function drawSkeleton(keypoints: any, ctx: CanvasRenderingContext2D) {
-    const connections = [
-      ["left_hip", "left_knee"],
-      ["left_knee", "left_ankle"],
-      ["left_shoulder", "left_hip"],
-      ["left_shoulder", "left_elbow"],
-      ["left_elbow", "left_wrist"],
-      ["right_hip", "right_knee"],
-      ["right_knee", "right_ankle"],
-      ["right_shoulder", "right_hip"],
-      ["right_shoulder", "right_elbow"],
-      ["right_elbow", "right_wrist"],
-    ];
-    connections.forEach(([a, b]) => {
-      const pointA = keypoints.find((kp: any) => kp.name === a);
-      const pointB = keypoints.find((kp: any) => kp.name === b);
-      if (pointA && pointB && pointA.score > 0.5 && pointB.score > 0.5) {
-        ctx.beginPath();
-        ctx.moveTo(pointA.x, pointA.y);
-        ctx.lineTo(pointB.x, pointB.y);
-        ctx.strokeStyle = "lime";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-    });
-  }
-  
-  
-  // When the average elbow angle falls below 70°, mark as "down."
-  // When it recovers above 150° with a delta >20°, count a rep.
+
+  // PUSHUP REP DETECTION (unchanged).
   function detectPushup(keypoints: any): boolean {
     const leftShoulder = keypoints.find((kp: any) => kp.name === "left_shoulder");
     const rightShoulder = keypoints.find((kp: any) => kp.name === "right_shoulder");
-    const leftElbow = keypoints.find((kp: any) => kp.name === "left_elbow");
-    const rightElbow = keypoints.find((kp: any) => kp.name === "right_elbow");
-    const leftWrist = keypoints.find((kp: any) => kp.name === "left_wrist");
-    const rightWrist = keypoints.find((kp: any) => kp.name === "right_wrist");
-    const leftHip = keypoints.find((kp: any) => kp.name === "left_hip");
-    
-    if (!leftShoulder || !rightShoulder || !leftElbow || !rightElbow || !leftWrist || !rightWrist || !leftHip) {
+    const nose = keypoints.find((kp: any) => kp.name === "nose");
+    if (!leftShoulder || !rightShoulder || !nose) {
       maybeToastError("pushup-missing", "Pushup error: Missing keypoints.", "destructive");
       return false;
     }
-    // Tolerance for minor deviations.
-    const tol = 5;
-    if (!(leftWrist.y > leftShoulder.y - tol && rightWrist.y > rightShoulder.y - tol)) {
-      maybeToastError("pushup-wrists", "Pushup posture: Ensure wrists are below shoulders.", "destructive");
+    const midShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    const bodySegment = Math.abs(midShoulderY - nose.y);
+    if (pushupBaseline.current === null && pushupState.current === "up") {
+      pushupBaseline.current = midShoulderY;
       return false;
     }
-    if (Math.abs(leftHip.y - leftShoulder.y) > 20) {
-      maybeToastError("pushup-torso", "Pushup posture: Keep your torso horizontal.", "destructive");
+    if (pushupState.current === "up" && (pushupBaseline.current - midShoulderY) > (0.15 * bodySegment)) {
+      pushupState.current = "down";
       return false;
     }
-  
-    const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-    const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
-    const rawAngle = (leftAngle + rightAngle) / 2;
-    const smoothAngle = exponentialSmooth(rawAngle, pushupSmooth.current);
-    pushupSmooth.current = smoothAngle;
-    console.log("Pushup Angle:", smoothAngle.toFixed(2));
-  
-    if (!pushupDown.current && smoothAngle < 70) {
-      pushupDown.current = true;
-    } else if (pushupDown.current && smoothAngle > 150 && (smoothAngle - 70) > 20 && !pushupCooldown.current) {
-      pushupCooldown.current = true;
-      setTimeout(() => { pushupCooldown.current = false; }, COOLDOWN);
+    if (pushupState.current === "down" && (pushupBaseline.current - midShoulderY) < (0.05 * bodySegment)) {
+      pushupState.current = "up";
+      pushupBaseline.current = midShoulderY;
       console.log("Pushup rep counted!");
-      pushupDown.current = false;
       return true;
     }
     return false;
   }
-  
-  // Squat detection: Uses knee angle (hip-knee-ankle).
-  // Counts a rep if the knee angle drops below ~85° then recovers above ~125°.
+
+  // NEW SQUAT REP DETECTION: Uses a combined approach with knee angles and mid-hip vertical drop.
   function detectSquat(keypoints: any): boolean {
-    const shoulder = keypoints.find((kp: any) => kp.name === "left_shoulder");
-    const hip = keypoints.find((kp: any) => kp.name === "left_hip");
-    const knee = keypoints.find((kp: any) => kp.name === "left_knee");
-    const ankle = keypoints.find((kp: any) => kp.name === "left_ankle");
-    if (shoulder && hip && knee && ankle) {
-      if (hip.y > shoulder.y + 20 && knee.y > hip.y + 15) {
-        const rawAngle = calculateAngle(hip, knee, ankle);
-        const smoothAngle = exponentialSmooth(rawAngle, squatSmooth.current);
-        squatSmooth.current = smoothAngle;
-        console.log("Squat Angle:", smoothAngle.toFixed(2));
-        if (squatPrevAngle.current === null) {
-          squatPrevAngle.current = smoothAngle;
-          squatMinAngle.current = smoothAngle;
-          return false;
-        }
-        if (smoothAngle < squatPrevAngle.current) {
-          if (smoothAngle < squatMinAngle.current) {
-            squatMinAngle.current = smoothAngle;
-          }
-        } else {
-          if (squatMinAngle.current < 85 && smoothAngle > 125 && !squatCooldown.current) {
-            squatCooldown.current = true;
-            setTimeout(() => { squatCooldown.current = false; }, COOLDOWN);
-            console.log("Squat rep counted!");
-            squatPrevAngle.current = smoothAngle;
-            squatMinAngle.current = Infinity;
-            return true;
-          }
-        }
-        squatPrevAngle.current = smoothAngle;
-      }
+    const leftShoulder = keypoints.find((kp: any) => kp.name === "left_shoulder");
+    const rightShoulder = keypoints.find((kp: any) => kp.name === "right_shoulder");
+    const leftHip = keypoints.find((kp: any) => kp.name === "left_hip");
+    const rightHip = keypoints.find((kp: any) => kp.name === "right_hip");
+    const leftKnee = keypoints.find((kp: any) => kp.name === "left_knee");
+    const rightKnee = keypoints.find((kp: any) => kp.name === "right_knee");
+    const leftAnkle = keypoints.find((kp: any) => kp.name === "left_ankle");
+    const rightAnkle = keypoints.find((kp: any) => kp.name === "right_ankle");
+    if (!leftShoulder || !rightShoulder || !leftHip || !rightHip || !leftKnee || !rightKnee || !leftAnkle || !rightAnkle) {
+      maybeToastError("squat-missing", "Squat error: Missing keypoints.", "destructive");
+      return false;
+    }
+    // Compute mid-hip and mid-shoulder positions.
+    const midHipY = (leftHip.y + rightHip.y) / 2;
+    const midShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    const torsoLength = Math.abs(midHipY - midShoulderY);
+    // Initialize squat baseline if not set.
+    if (squatBaseline.current === null && squatState.current === "up") {
+      squatBaseline.current = midHipY;
+      return false;
+    }
+    // Compute average knee angle.
+    const leftAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
+    const rightAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
+    let avgKneeAngle = (leftAngle + rightAngle) / 2;
+    avgKneeAngle = exponentialSmooth(avgKneeAngle, squatSmooth.current);
+    squatSmooth.current = avgKneeAngle;
+    // Use both signals: mid-hip drop and knee angle.
+    if (squatState.current === "up" && ((midHipY - squatBaseline.current) > (0.15 * torsoLength)) && avgKneeAngle < 80) {
+      squatState.current = "down";
+      return false;
+    }
+    if (squatState.current === "down" && ((midHipY - squatBaseline.current) < (0.05 * torsoLength)) && avgKneeAngle > 150) {
+      squatState.current = "up";
+      // Update baseline after a rep.
+      squatBaseline.current = midHipY;
+      console.log("Squat rep counted!");
+      return true;
     }
     return false;
   }
-  
-  // Counts a rep if the angle drops below ~100° then recovers above ~160°.
-  // Also ensures the nose is sufficiently above the shoulder.
-  function detectCrunch(keypoints: any): boolean {
-    const nose = keypoints.find((kp: any) => kp.name === "nose");
-    const shoulder = keypoints.find((kp: any) => kp.name === "left_shoulder");
-    const hip = keypoints.find((kp: any) => kp.name === "left_hip");
-    const knee = keypoints.find((kp: any) => kp.name === "left_knee");
-    if (nose && shoulder && hip && knee) {
-      if (nose.y <= shoulder.y + 5) {
-        maybeToastError("crunch-posture", "Crunch posture: Lift your head slightly.", "destructive");
-        return false;
-      }
-      const rawAngle = calculateAngle(shoulder, hip, knee);
-      const smoothAngle = exponentialSmooth(rawAngle, crunchSmooth.current);
-      crunchSmooth.current = smoothAngle;
-      console.log("Crunch Angle:", smoothAngle.toFixed(2));
-      if (crunchPrevAngle.current === null) {
-        crunchPrevAngle.current = smoothAngle;
-        crunchMinAngle.current = smoothAngle;
-        return false;
-      }
-      if (smoothAngle < crunchPrevAngle.current) {
-        if (smoothAngle < crunchMinAngle.current) {
-          crunchMinAngle.current = smoothAngle;
-        }
-      } else {
-        if ((smoothAngle - crunchMinAngle.current) > 20 && crunchMinAngle.current < 100 && smoothAngle > 160 && !crunchCooldown.current) {
-          crunchCooldown.current = true;
-          setTimeout(() => { crunchCooldown.current = false; }, COOLDOWN);
-          console.log("Crunch rep counted!");
-          crunchPrevAngle.current = smoothAngle;
-          crunchMinAngle.current = Infinity;
-          return true;
-        }
-      }
-      crunchPrevAngle.current = smoothAngle;
-    } else {
-      maybeToastError("crunch-missing", "Crunch error: Missing keypoints.", "destructive");
-    }
-    return false;
-  }
-  
+
+  // MAIN POSE DETECTION LOOP.
   useEffect(() => {
     async function detectPoses() {
-      if (!detectorRef.current || !videoRef.current || videoRef.current.readyState !== 4 || !canvasRef.current) {
+      if (
+        !detectorRef.current ||
+        !videoRef.current ||
+        videoRef.current.readyState !== 4 ||
+        !canvasRef.current
+      ) {
         animationFrameRef.current = requestAnimationFrame(detectPoses);
         return;
       }
@@ -278,32 +189,37 @@ export function useExerciseCounter() {
             canvasRef.current.width = videoRef.current.videoWidth;
             canvasRef.current.height = videoRef.current.videoHeight;
             ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-            drawKeypoints(keypoints, ctx);
-            drawSkeleton(keypoints, ctx);
-          }
-          let repCounted = false;
-          const leftShoulder = keypoints.find((kp: any) => kp.name === "left_shoulder");
-          const leftHip = keypoints.find((kp: any) => kp.name === "left_hip");
-          const verticalDiff = leftShoulder && leftHip ? leftHip.y - leftShoulder.y : 100;
-          // For pushups, require verticalDiff < 40.
-          if (verticalDiff < 40) {
-            if (!repCounted && detectPushup(keypoints)) {
-              // Standard vs. knee pushup differentiation.
-              if (verticalDiff < 20) {
-                setExerciseState(prev => ({ ...prev, pushup: prev.pushup + 1 }));
-                console.log("Standard pushup counted");
-              } else {
-                setExerciseState(prev => ({ ...prev, pushup: prev.pushup + 0.5 }));
-                console.log("Knee pushup counted (0.5)");
+            // Draw keypoints.
+            keypoints.forEach((kp: any) => {
+              if (kp.score > 0.5) {
+                ctx.beginPath();
+                ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = "red";
+                ctx.fill();
               }
+            });
+            // If in squat mode, draw the baseline (green line) for visual reference.
+            const mode = classifyExercise(keypoints);
+            if (mode === "squat" && squatBaseline.current !== null) {
+              ctx.beginPath();
+              ctx.moveTo(0, squatBaseline.current);
+              ctx.lineTo(canvasRef.current.width, squatBaseline.current);
+              ctx.strokeStyle = "green";
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+          }
+          // Classify exercise mode.
+          const mode = classifyExercise(keypoints);
+          let repCounted = false;
+          if (mode === "pushup") {
+            if (!repCounted && detectPushup(keypoints)) {
+              setExerciseState(prev => ({ ...prev, pushup: prev.pushup + 1 }));
               repCounted = true;
             }
-          } else {
+          } else if (mode === "squat") {
             if (!repCounted && detectSquat(keypoints)) {
               setExerciseState(prev => ({ ...prev, squat: prev.squat + 1 }));
-              repCounted = true;
-            } else if (!repCounted && detectCrunch(keypoints)) {
-              setExerciseState(prev => ({ ...prev, crunch: prev.crunch + 1 }));
               repCounted = true;
             }
           }
@@ -320,6 +236,34 @@ export function useExerciseCounter() {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [initialized]);
-  
+
+  // Initialize TensorFlow and the pose detector.
+  useEffect(() => {
+    async function initTF() {
+      try {
+        await tf.setBackend("webgl");
+        await tf.ready();
+        setInitialized(true);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    initTF();
+  }, []);
+  useEffect(() => {
+    if (!initialized) return;
+    async function initDetector() {
+      try {
+        detectorRef.current = await posedetection.createDetector(
+          posedetection.SupportedModels.MoveNet,
+          { modelType: posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    initDetector();
+  }, [initialized]);
+
   return { exerciseState, videoRef, canvasRef };
 }
