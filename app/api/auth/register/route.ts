@@ -4,7 +4,6 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
 const checkOtp = async (otp: string, email: string) => {
-  console.log("otp called");
 
   try {
     const response = await fetch(`${process.env.PORT}/api/auth/verify-otp`, {
