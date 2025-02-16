@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+	// Construct the redirect URL (using the request origin)
 	const response = NextResponse.redirect(new URL("/", request.url));
-	const cookieOptions = { path: "/" };
 
+	// Define your project domain explicitly for cookie deletion
+	const projectDomain = "bajaj-flex-it-out-chi.vercel.app";
+
+	// Retrieve all cookies from the request
 	const allCookies = request.cookies.getAll();
 
-	// Loop through each cookie and delete it.
+	// Delete each cookie with the specified domain and path
 	allCookies.forEach((cookie) => {
-		// Delete cookie with the same name and path.
-		// Note: If cookies were set with a domain or other attributes,
-		// you might need to include those attributes here.
-		response.cookies.delete({ name: cookie.name, path: "/" });
+		response.cookies.delete({
+			name: cookie.name,
+			path: "/",
+			domain: projectDomain,
+		});
 	});
+
 	return response;
 }
