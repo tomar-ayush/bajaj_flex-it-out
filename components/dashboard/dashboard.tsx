@@ -1,5 +1,5 @@
 import { Leaderboard } from "./leaderboard";
-import { LiveTracking } from "./live-tracking";
+import LiveTracking from "./live-tracking";
 import { Sidebar } from "./sidebar";
 import { UserOverview } from "./user-overview";
 
