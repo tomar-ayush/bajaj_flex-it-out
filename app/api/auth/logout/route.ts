@@ -19,5 +19,7 @@ export async function GET(request: NextRequest) {
 		});
 	});
 
+	request.cookies.delete("__Secure-next-auth.session-token")
+
 	return response;
 }
