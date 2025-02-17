@@ -1,7 +1,11 @@
+"use client"
+
 import { Card } from '@/components/ui/card';
 import { Coins, Star, Package, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sidebar } from './sidebar';
+import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 
 const products = [
   {
@@ -23,7 +27,7 @@ const products = [
   {
     name: 'Smart Water Bottle',
     description: 'Track your hydration with smart sensors',
-    tokens: 2500,
+    tokens: 0,
     image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=300&h=200',
     features: ['LED indicators', 'App connectivity', 'Temperature sensing'],
     icon: Zap,
@@ -38,12 +42,55 @@ const products = [
   },
 ];
 
+export function handlePurchase() {
+  alert("purchase succesful")
+}
+
 export default function RewardsDashboard() {
+
+  const [tokens, setTokens] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { status, data: session } = useSession();
+
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setIsLoading(true);
+        const email = session?.user?.email;
+        if (!email) {
+          throw new Error('No user email found');
+        }
+
+        const response = await fetch(
+          `/api/getCurrUser?email=${encodeURIComponent(email)}`
+        );
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        setTokens(data.data.user.tokens)
+      } catch (err) {
+        console.error("Error occured while getting tokens: " + err)
+      } finally {
+        setIsLoading(false)
+      }
+    };
+
+    if (session?.user?.email) {
+      fetchUserData();
+    }
+  }, [session]); // Add session as dependency
+
+
   return (
     <div className="block sm:flex h-screen bg-background">
-     <div className="w-[100%] sm:w-64 block">
-             <Sidebar />
-           </div>
+      <div className="w-[100%] sm:w-64 block">
+        <Sidebar />
+      </div>
       <main className="flex-1 overflow-y-auto p-8">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8">
@@ -56,7 +103,7 @@ export default function RewardsDashboard() {
               </div>
               <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2">
                 <Coins className="h-5 w-5 text-primary" />
-                <span className="font-semibold">2,450 tokens</span>
+                <span className="font-semibold">{isLoading ? "Loading..." : tokens} tokens</span>
               </div>
             </div>
           </div>
@@ -100,9 +147,10 @@ export default function RewardsDashboard() {
                   </div>
                   <Button
                     className="mt-4 w-full"
-                    disabled={product.tokens > 2450}
+                    onClick={handlePurchase}
+                    disabled={product.tokens > tokens}
                   >
-                    {product.tokens > 2450 ? 'Not Enough Tokens' : 'Redeem Now'}
+                    {product.tokens > tokens ? 'Not Enough Tokens' : 'Redeem Now'}
                   </Button>
                 </div>
               </Card>
