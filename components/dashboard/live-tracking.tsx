@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { ExerciseType, useExerciseCounter } from "@/lib/useExerciseCounter";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 
 export function LiveTracking() {
@@ -16,8 +16,7 @@ export function LiveTracking() {
     currExercise,
     setCurrExercise,
   } = useExerciseCounter();
-
-  // Show milestone toast for multiples of 10
+  
   useEffect(() => {
     const checkMilestone = (name: ExerciseType, count: number) => {
       if (count > 0 && count % 10 === 0) {
@@ -28,42 +27,49 @@ export function LiveTracking() {
     checkMilestone("Push-Up", exerciseCounts.pushup);
     checkMilestone("Pull-Up", exerciseCounts.pullup);
   }, [exerciseCounts]);
-
-  // We have 3 exercise options plus "No Count" toggles camera
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      toast({ title: "Keep flexing! Your form is on point.", variant: "success" });
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+  
   const exerciseOptions: ExerciseType[] = ["Push-Up", "Pull-Up", "Squat"];
-
+  
   return (
     <Card className="overflow-hidden">
-      <div className="border-b p-6">
-        <h2 className="text-2xl font-semibold">Live Activity Tracking</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          AI-powered exercise detection using TensorFlow.js MoveNet
-        </p>
-      </div>
-
-      {/* Top row of 4 buttons */}
-      <div className="flex gap-2 p-4 justify-center">
-        {exerciseOptions.map((option) => (
+      <div className="border-b p-6 flex flex-col md:flex-row justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-semibold">Live Activity Tracking</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            AI-powered exercise detection using TensorFlow.js MoveNet
+          </p>
+        </div>
+        <div className="flex gap-2 mt-4 md:mt-0">
+          {exerciseOptions.map((option) => (
+            <Button
+              key={option}
+              variant={currExercise === option ? "default" : "outline"}
+              onClick={() => setCurrExercise(option)}
+              size="sm"
+            >
+              {option}
+            </Button>
+          ))}
           <Button
-            key={option}
-            variant={currExercise === option ? "default" : "outline"}
-            onClick={() => setCurrExercise(option)}
+            variant={enableDetection ? "default" : "outline"}
+            onClick={toggleCamera}
             size="sm"
           >
-            {option}
+            {enableDetection ? "Stop Flexing" : "Start Flexing"}
           </Button>
-        ))}
-        <Button
-          variant={!enableDetection ? "default" : "outline"}
-          onClick={toggleCamera}
-          size="sm"
-        >
-          {enableDetection ? "Stop Camera" : "No Count"}
-        </Button>
+          <Button onClick={toggleCamera} size="sm">
+            Toggle Camera
+          </Button>
+        </div>
       </div>
-
-      {/* Middle black bar: if an exercise is selected => show that count, else show total */}
-      <div className="border-t border-b p-4 flex justify-around text-white bg-black bg-opacity-75">
+      <div className="border-t border-b p-4 flex flex-wrap justify-around text-white bg-black bg-opacity-75">
         {currExercise ? (
           <span>
             {currExercise}s:{" "}
@@ -82,12 +88,7 @@ export function LiveTracking() {
           </>
         )}
       </div>
-
-      {/* Video + Canvas + center overlay toggle */}
-      <div
-        className="relative bg-black mx-auto"
-        style={{ width: "640px", height: "480px" }}
-      >
+      <div className="relative bg-black mx-auto w-full max-w-2xl aspect-video">
         <video
           ref={videoRef}
           autoPlay
@@ -96,12 +97,6 @@ export function LiveTracking() {
           style={{ visibility: enableDetection ? "visible" : "hidden" }}
         />
         <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
-        {/* Center overlay button */}
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <Button size="lg" className="gap-2" onClick={toggleCamera}>
-            {enableDetection ? "Stop Camera" : "Start Camera"}
-          </Button>
-        </div>
       </div>
     </Card>
   );
