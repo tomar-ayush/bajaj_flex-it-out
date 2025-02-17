@@ -24,7 +24,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Daily Challenges", href: "/dashboard/challenges", icon: Rocket },
   { name: "Rewards Store", href: "/dashboard/rewards", icon: Gift },
-  { name: "Challenges", href: "/challenges", icon: Trophy },
+  { name: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -74,7 +74,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Top Navigation */}
-      <div className="flex md:hidden bg-card border-b p-4 items-center justify-between">
+      <div className="flex sm:hidden bg-card border-b p-4 items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex items-center font-semibold text-xl">
 
