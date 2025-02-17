@@ -3,6 +3,9 @@ import { User } from "@/models/user"
 import { NextRequest, NextResponse } from "next/server";
 import { image } from "@tensorflow/tfjs";
 
+
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
 
 	try {

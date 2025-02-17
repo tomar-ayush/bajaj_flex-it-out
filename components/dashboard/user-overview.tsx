@@ -16,14 +16,14 @@ export function UserOverview() {
   const stats = [
     {
       name: 'Calories Burned',
-      value: calories ? `${calories}` : "0",
+      value: calories ? `${calories}` : "loading...",
       icon: Activity,
       change: '+12%',
       changeType: 'positive',
     },
     {
       name: 'Tokens Earned',
-      value: tokens ? tokens : "0",
+      value: tokens ? tokens : "loading...",
       icon: Coins,
       change: '+8%',
       changeType: 'positive',
