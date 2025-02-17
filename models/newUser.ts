@@ -8,21 +8,18 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
+    unique: true
   },
   password: {
     type: String,
     required: true,
   },
-  points: {
+  score: {
     type: Number
   }
-
 },
   {
-    collection: "bajaj_users", // Custom collection name
+    collection: "bajaj_users_new",
     timestamps: true,
   }
 );
