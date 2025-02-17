@@ -16,16 +16,13 @@ export interface IUser extends Document {
 // Interface for lean queries (plain JavaScript objects)
 export interface IUserLean {
   _id: string;
-  name?: string;
+  name: string;
   email: string;
-  emailVerified?: Date;
-  image?: string;
+  password: string;
   points: number;
-  accounts?: string[]; // ObjectId becomes string in lean queries
-  sessions?: string[]; // ObjectId becomes string in lean queries
   createdAt: Date;
   updatedAt: Date;
-  __v: number;
+  emailVerified?: Date;
 }
 
 // Interface for API response

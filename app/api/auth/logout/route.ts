@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
 		}
 
 		// Delete all cookies with proper options
+		console.log("clearing cookies called")
 		const cookies = request.cookies.getAll();
 		for (const cookie of cookies) {
 			try {
@@ -56,10 +57,3 @@ export async function GET(request: NextRequest) {
 		);
 	}
 }
-
-// Optional: Add rate limiting middleware configuration if needed
-export const config = {
-	api: {
-		// externalResolver: true,
-	},
-};

@@ -1,4 +1,4 @@
-import { User } from "@/models/user1";
+import { User } from "@/models/user";
 import connectDB from "@/utils/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
@@ -42,7 +42,6 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("otp verified");
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {

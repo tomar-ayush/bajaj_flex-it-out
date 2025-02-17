@@ -3,6 +3,7 @@ import mongoose, { Document } from 'mongoose';
 export interface IUser extends Document {
   name?: string;
   email: string;
+  password: string;
   emailVerified?: Date;
   image?: string;
   points: number;
@@ -15,6 +16,10 @@ const userSchema = new mongoose.Schema<IUser>({
   email: {
     type: String,
     unique: true,
+    required: true,
+  },
+  password: {
+    type: String,
     required: true,
   },
   emailVerified: Date,
