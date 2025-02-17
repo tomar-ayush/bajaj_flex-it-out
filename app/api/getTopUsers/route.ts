@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 		const topUsers = await User.find({})
 			.select('-password') // Exclude password from the response
 			.sort({ points: -1 }) // Sort by points in descending order
-			.limit(3) // Get only 3 users
+			.limit(5) // Get only 3 users
 			.lean();
 		// console.log(allUsers)
 		// return NextResponse.json({ message: "The db is connected", user: "users" });
