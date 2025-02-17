@@ -74,7 +74,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Top Navigation */}
-      <div className="flex md:hidden bg-card border-b p-4 items-center justify-between">
+      <div className="flex sm:hidden bg-card border-b p-4 items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex items-center font-semibold text-xl">
 
