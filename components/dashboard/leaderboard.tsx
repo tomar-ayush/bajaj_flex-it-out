@@ -4,20 +4,23 @@ import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Medal } from 'lucide-react';
 import { useState, useEffect } from "react"
+import { useSession } from 'next-auth/react';
 
 interface User {
   name: string;
   points: number;
-  avatar?: string;
+  image?: string;
 }
 
-const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=50&h=50"
+const DEFAULT_AVATAR = "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?t=st=1739812418~exp=1739816018~hmac=2442be3cd30435c77e5ab68924abe83003c70c93db0a9ef781b4625d57154d82&w=740"
 
 
 
 export function Leaderboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { status, data: session } = useSession();
 
   const getAllUsers = async () => {
     try {
@@ -44,6 +47,7 @@ export function Leaderboard() {
           <p className="mt-1 text-sm text-muted-foreground">
             Top performers this week
           </p>
+
         </div>
         <div>
 
@@ -72,7 +76,7 @@ export function Leaderboard() {
                   </div>
                   <Avatar>
                     <img
-                      src={user.avatar || DEFAULT_AVATAR}
+                      src={user.image || session?.user?.image || DEFAULT_AVATAR}
                       alt={user.name}
                       className="h-10 w-10 rounded-full object-cover"
                       onError={(e) => {
