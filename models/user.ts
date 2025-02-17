@@ -7,6 +7,8 @@ export interface IUser extends Document {
   emailVerified?: Date;
   image?: string;
   points: number;
+  token: number;
+  calories: number;
   accounts?: mongoose.Types.ObjectId[];
   sessions?: mongoose.Types.ObjectId[];
 }
@@ -28,6 +30,15 @@ const userSchema = new mongoose.Schema<IUser>({
     type: Number,
     default: 0,
   },
+  calories: {
+    type: Number,
+    default: 0,
+  },
+  token: {
+    type: Number,
+    default: 0,
+  },
+
   accounts: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Account'

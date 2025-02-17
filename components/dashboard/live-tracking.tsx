@@ -15,6 +15,7 @@ export function LiveTracking() {
     toggleCamera,
     currExercise,
     setCurrExercise,
+
   } = useExerciseCounter();
 
   const startAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -93,8 +94,8 @@ export function LiveTracking() {
             {currExercise === "Push-Up"
               ? exerciseCounts.pushup
               : currExercise === "Pull-Up"
-              ? exerciseCounts.pullup
-              : exerciseCounts.squat}
+                ? exerciseCounts.pullup
+                : exerciseCounts.squat}
           </span>
         ) : (
           <>
