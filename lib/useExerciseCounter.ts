@@ -3,6 +3,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import * as posedetection from "@tensorflow-models/pose-detection";
 import "@tensorflow/tfjs-backend-webgl";
 import * as tf from "@tensorflow/tfjs";
+import { useSession } from "next-auth/react";
 
 export type ExerciseType = "Push-Up" | "Pull-Up" | "Squat";
 export type ExerciseCounts = {
@@ -27,6 +28,7 @@ export function useExerciseCounter() {
   const totalReps = exerciseCounts.pushup + exerciseCounts.pullup + exerciseCounts.squat;
   
   const pushDownRef = useRef<number>(0);
+  const { data: session } = useSession();
 
   useEffect(() => {
     async function initDetector() {
@@ -206,6 +208,28 @@ export function useExerciseCounter() {
   const toggleCamera = () => {
     setEnableDetection(prev => !prev);
   };
+  
+  useEffect(() => {
+    if (totalReps > 0) {
+      const newCalories = totalReps * 5;
+      const newTokens = totalReps * 10;
+      const timer = setTimeout(() => {
+        fetch("/api/user/update", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: session?.user?.email,
+            calories: newCalories,
+            tokens: newTokens,
+          }),
+        }
+      
+      ).catch(err => console.error(err));
+      // console.log("Updated calories and tokens", newCalories, newTokens, session?.user?.email);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [exerciseCounts, totalReps]);
   
   return {
     exerciseCounts,
