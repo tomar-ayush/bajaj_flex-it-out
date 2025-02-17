@@ -5,7 +5,8 @@ import { Coins, Star, Package, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sidebar } from './sidebar';
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { POST } from '@/app/api/auth/register/route';
 
 const products = [
   {
@@ -27,7 +28,7 @@ const products = [
   {
     name: 'Smart Water Bottle',
     description: 'Track your hydration with smart sensors',
-    tokens: 0,
+    tokens: 1,
     image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=300&h=200',
     features: ['LED indicators', 'App connectivity', 'Temperature sensing'],
     icon: Zap,
@@ -42,48 +43,92 @@ const products = [
   },
 ];
 
-export function handlePurchase() {
-  alert("purchase succesful")
-}
 
 export default function RewardsDashboard() {
 
   const [tokens, setTokens] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const { data: session } = useSession();
 
-  const { status, data: session } = useSession();
+  const fetchUserData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const email = session?.user?.email;
+      if (!email) {
+        throw new Error('No user email found');
+      }
 
+      const response = await fetch(
+        `/api/getCurrUser?email=${encodeURIComponent(email)}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setTokens(data.data.user.tokens);
+    } catch (err) {
+      console.error("Error occurred while getting tokens:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session?.user?.email]);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setIsLoading(true);
-        const email = session?.user?.email;
-        if (!email) {
-          throw new Error('No user email found');
-        }
-
-        const response = await fetch(
-          `/api/getCurrUser?email=${encodeURIComponent(email)}`
-        );
-
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-        setTokens(data.data.user.tokens)
-      } catch (err) {
-        console.error("Error occured while getting tokens: " + err)
-      } finally {
-        setIsLoading(false)
-      }
-    };
-
     if (session?.user?.email) {
       fetchUserData();
     }
-  }, [session]); // Add session as dependency
+  }, [session, fetchUserData]);
+
+  const handlePurchase = async (product: any) => {
+    try {
+      setIsLoading(true);
+
+      // send email
+      const sendEmail = await fetch('/api/user/sendEmail', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          body: `Purchase Successful!
+
+Congrats your purchase of ${product.name} has been successful! Your ${product.tokens} has been deducted and it shall reflect in your dashboard soon.
+
+You’ll receive it within 3 working days. Keep flexing and burning calories.
+
+Team 100xdevs`,
+          email: session?.user?.email,
+        })
+      })
+
+
+
+      const response = await fetch("/api/user/purchase", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tokens: product.tokens,
+          email: session?.user?.email,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Purchase failed');
+      }
+
+      alert(`Purchase successful for: ${product.name}`);
+      // send an email if needed
+
+    } catch (err) {
+      console.error("Error while purchasing:", err);
+      alert('Purchase failed. Please try again.');
+    } finally {
+      // Refresh user data after purchase attempt, regardless of success/failure
+      await fetchUserData();
+      setIsLoading(false);
+    }
+  };
+
 
 
   return (
@@ -147,7 +192,7 @@ export default function RewardsDashboard() {
                   </div>
                   <Button
                     className="mt-4 w-full"
-                    onClick={handlePurchase}
+                    onClick={() => handlePurchase(product)}
                     disabled={product.tokens > tokens}
                   >
                     {product.tokens > tokens ? 'Not Enough Tokens' : 'Redeem Now'}
