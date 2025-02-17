@@ -1,31 +1,33 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, MongoClientOptions } from 'mongodb';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var _mongoClientPromise: Promise<MongoClient> | undefined;
+if (!process.env.MONGO_URI) {
+  throw new Error('Please define the MONGO_URI environment variable inside .env.local');
 }
 
-const uri = process.env.MONGODB_URI!;
-const options = {};
+const uri = process.env.MONGO_URI;
+const options: MongoClientOptions = {
+  maxPoolSize: 10,
+  minPoolSize: 5,
+};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
-if (!process.env.MONGODB_URI) {
-  throw new Error("Please add your Mongo URI to .env.local");
-}
+if (process.env.NODE_ENV === 'development') {
+  let globalWithMongo = global as typeof globalThis & {
+    _mongoClientPromise?: Promise<MongoClient>;
+  };
 
-if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the client is preserved across module reloads.
-  if (!global._mongoClientPromise) {
+  if (!globalWithMongo._mongoClientPromise) {
     client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
+    globalWithMongo._mongoClientPromise = client.connect();
   }
-  clientPromise = global._mongoClientPromise;
+  clientPromise = globalWithMongo._mongoClientPromise;
 } else {
-  // In production mode, it's best not to use a global variable.
   client = new MongoClient(uri, options);
   clientPromise = client.connect();
 }
 
+// You can specify the database name when performing operations
+export const dbName = 'Practice';
 export default clientPromise;

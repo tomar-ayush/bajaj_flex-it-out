@@ -4,13 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
+
+  const router = useRouter();
+
   const [identifier, setIdentifier] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +24,7 @@ export function LoginForm({
     setError(null);
 
     const res = await signIn("credentials", {
-      redirect: false, 
+      redirect: false,
       identifier,
       password,
     });
@@ -27,16 +32,29 @@ export function LoginForm({
     if (res?.error) {
       setError(res.error);
     } else {
-      // router.push("/dashboard");
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     }
   };
 
+
   const handleGoogleLogin = async () => {
-    await signIn("google", {
-      redirect: true,
-      callbackUrl: "/dashboard",
-    });
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const result = await signIn("google", {
+        callbackUrl: "/dashboard",
+        redirect: true,
+      });
+
+      if (result?.error) {
+        setError(result.error);
+      }
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
