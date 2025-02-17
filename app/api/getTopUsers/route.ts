@@ -1,6 +1,7 @@
 import connectDB from "@/utils/db";
 import { User } from "@/models/user"
 import { NextRequest, NextResponse } from "next/server";
+import { image } from "@tensorflow/tfjs";
 
 export async function GET(request: NextRequest) {
 
@@ -27,7 +28,8 @@ export async function GET(request: NextRequest) {
 					name: user.name,
 					// email: user.email,
 					points: user.points || 0,
-					createdAt: user.createdAt
+					createdAt: user.createdAt,
+					image: user.image,
 				})),
 				count: topUsers.length
 			},

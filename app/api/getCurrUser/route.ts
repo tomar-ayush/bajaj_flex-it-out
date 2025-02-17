@@ -42,6 +42,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<IUserRespo
 				user: {
 					name: user.name,
 					points: user.points,
+					calories: user.calories,
+
 				},
 				rank,
 				totalUsers,
