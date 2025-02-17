@@ -18,7 +18,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<IUserRespo
 		}
 
 		// Find the user and their points
-		const user = await User.findOne({ email }).lean() as IUserLean;
+		const user = await User.findOne({ email }).lean<IUserLean>();
 
 		if (!user) {
 			return NextResponse.json({

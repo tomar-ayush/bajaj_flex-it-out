@@ -1,7 +1,7 @@
-import { MongoClient, MongoClientOptions } from 'mongodb';
+import { MongoClient, MongoClientOptions } from "mongodb";
 
 if (!process.env.MONGO_URI) {
-  throw new Error('Please define the MONGO_URI environment variable inside .env.local');
+  throw new Error("Please define the MONGO_URI environment variable inside .env.local");
 }
 
 const uri = process.env.MONGO_URI;
@@ -13,8 +13,8 @@ const options: MongoClientOptions = {
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
-if (process.env.NODE_ENV === 'development') {
-  let globalWithMongo = global as typeof globalThis & {
+if (process.env.NODE_ENV === "development") {
+  const globalWithMongo = global as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>;
   };
 
@@ -29,5 +29,5 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // You can specify the database name when performing operations
-export const dbName = 'Practice';
+export const dbName = "Practice";
 export default clientPromise;
