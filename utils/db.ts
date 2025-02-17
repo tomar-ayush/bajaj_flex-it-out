@@ -26,7 +26,7 @@ async function connectDB() {
   if (!globalThis.mongooseCache.promise) {
     const opts = {
       bufferCommands: false,
-      dbName: 'Practice',
+      dbName: 'Bajaj',
     };
 
     globalThis.mongooseCache.promise = mongoose.connect(mongo_uri, opts)
