@@ -19,6 +19,7 @@ export interface IUserLean {
   name: string;
   email: string;
   password: string;
+  token: number;
   points: number;
   calories: number;
   createdAt: Date;

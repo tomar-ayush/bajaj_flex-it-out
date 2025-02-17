@@ -43,6 +43,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<IUserRespo
 					name: user.name,
 					points: user.points,
 					calories: user.calories,
+					tokens: user.token,
 
 				},
 				rank,

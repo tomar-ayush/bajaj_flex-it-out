@@ -41,7 +41,6 @@ export function Sidebar() {
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "GET" });
-
       window.location.href = "/"
     } catch (error) {
       console.error("Logout failed:", error);
@@ -184,7 +183,6 @@ export function Sidebar() {
                   onClick={() => {
                     setProfileModalOpen(false);
                     handleLogout()
-                    // logout logic
                   }}
                 >
                   Logout

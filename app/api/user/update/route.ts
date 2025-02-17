@@ -24,8 +24,9 @@ export async function PUT(request: NextRequest) {
 			);
 		}
 
-		user.calories = calories;
-		user.tokens = tokens;
+		user.calories += calories;
+		user.points += calories / 5;
+		user.token += tokens;
 		await user.save();
 
 		return NextResponse.json(

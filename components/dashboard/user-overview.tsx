@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 
 export function UserOverview() {
   const [rank, setRank] = useState("");
+  const [calories, setCalories] = useState("")
+  const [tokens, setTokens] = useState("")
   const [error, setError] = useState("");
   const { status, data: session } = useSession();
 
@@ -14,14 +16,14 @@ export function UserOverview() {
   const stats = [
     {
       name: 'Calories Burned',
-      value: '1,248',
+      value: calories ? `${calories}` : "0",
       icon: Activity,
       change: '+12%',
       changeType: 'positive',
     },
     {
       name: 'Tokens Earned',
-      value: '2,450',
+      value: tokens ? tokens : "0",
       icon: Coins,
       change: '+8%',
       changeType: 'positive',
@@ -53,6 +55,8 @@ export function UserOverview() {
 
         const data = await response.json();
         setRank(data.data.rank);
+        setCalories(data.data.user.calories);
+        setTokens(data.data.user.tokens)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
         setRank("∞");
