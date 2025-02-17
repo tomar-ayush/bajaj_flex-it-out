@@ -1,16 +1,28 @@
 import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { IUserLean } from "@/types/user";
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import clientPromise from "@/lib/mongodb";
-import bcrypt from "bcryptjs";
-import { User } from "@/models/user";
 import connectDB from "@/utils/db";
-import { IUserLean } from "@/types/user";
+import { User } from "@/models/user";
+import { Adapter } from "next-auth/adapters";
 
 export const authOptions: NextAuthOptions = {
+	//	debug: true,
 	providers: [
-
+		GoogleProvider({
+			clientId: process.env.GOOGLE_CLIENT_ID!,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+			authorization: {
+				params: {
+					prompt: "select_account",
+					access_type: "offline",
+					response_type: "code"
+				}
+			}
+		}),
 		CredentialsProvider({
 			name: "Credentials",
 			credentials: {
@@ -59,40 +71,74 @@ export const authOptions: NextAuthOptions = {
 					throw new Error(error instanceof Error ? error.message : "Authentication failed");
 				}
 			}
-		}),
-		GoogleProvider({
-			clientId: process.env.GOOGLE_CLIENT_ID!,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-		}),
+		})
 	],
-	adapter: MongoDBAdapter(clientPromise),
-	session: {
-		strategy: "jwt",
-	},
+	adapter: MongoDBAdapter(clientPromise) as Adapter,
 	callbacks: {
+		async signIn({ user, account, profile }) {
+			try {
+				await connectDB();
+				console.log("SignIn Callback - User:", JSON.stringify(user, null, 2));
+
+				if (account?.provider === "google") {
+					const existingUser = await User.findOne({ email: user.email });
+
+					if (!existingUser) {
+						await User.create({
+							name: user.name,
+							email: user.email,
+							password: "oauth_password",
+							points: 0,
+							image: user.image
+						});
+					}
+				}
+				return true;
+			} catch (error) {
+				console.error("Error in signIn callback:", error);
+				return false;
+			}
+		},
 		async jwt({ token, user }) {
 			if (user) {
 				token.id = user.id;
-				token.email = user.email;
-				token.name = user.name;
-				token.points = user.points;
+				token.points = (user as any).points;
 			}
 			return token;
 		},
 		async session({ session, token }) {
 			if (session.user) {
 				session.user.id = token.id;
-				session.user.email = token.email as string;
-				session.user.name = token.name as string;
 				(session.user as any).points = token.points;
+
+				// Fetch latest user data
+				await connectDB();
+				const dbUser = await User.findOne({ email: session.user.email });
+				if (dbUser) {
+					(session.user as any).points = dbUser.points;
+				}
 			}
 			return session;
-		}
+		},
+	},
+	events: {
+		async signIn({ user }) {
+			console.log("SignIn event:", user);
+		},
+		async createUser({ user }) {
+			console.log("Create user event:", user);
+		},
+		async linkAccount({ account, user }) {
+			console.log("Link account event:", { account, user });
+		},
 	},
 	pages: {
 		signIn: '/login',
 		error: '/auth/error',
 	},
-	debug: process.env.NODE_ENV === 'development',
+	session: {
+		strategy: "jwt",
+		maxAge: 30 * 24 * 60 * 60,
+	},
 	secret: process.env.NEXTAUTH_SECRET,
 };
