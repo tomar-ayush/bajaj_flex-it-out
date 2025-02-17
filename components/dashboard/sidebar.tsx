@@ -18,6 +18,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "./theme-toggle";
+import { useSession } from "next-auth/react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -28,6 +29,9 @@ const navigation = [
 ];
 
 export function Sidebar() {
+
+  const { status, data: session } = useSession();
+
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -46,7 +50,8 @@ export function Sidebar() {
 
   const user = {
     name: "John Doe",
-    avatar:
+    avatar: session?.user?.image ||
+
       "https://avatars.githubusercontent.com/u/117257768?s=400&u=58fca1a27a28a0acd263ce4a026b32979d05cd56&v=4", // Replace with actual avatar URL or leave empty to show fallback icon.
   };
 

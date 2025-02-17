@@ -42,7 +42,6 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("otp verified");
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {

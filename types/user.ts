@@ -1,21 +1,42 @@
-export interface IUser {
-  _id: string;
-  name: string;
+import { Document, Types } from 'mongoose';
+
+// Interface for Mongoose Document (used in model)
+export interface IUser extends Document {
+  name?: string;
   email: string;
-  password: string;
-  points?: number;
+  emailVerified?: Date;
+  image?: string;
+  points: number;
+  accounts?: Types.ObjectId[];
+  sessions?: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
-  __v: number;
 }
 
-// Type for lean queries (plain JavaScript objects)
+// Interface for lean queries (plain JavaScript objects)
 export interface IUserLean {
   _id: string;
   name: string;
   email: string;
-  points?: number; // Make points optional since it might not always be set
+  password: string;
+  points: number;
   createdAt: Date;
   updatedAt: Date;
-  __v: number;
+  emailVerified?: Date;
+}
+
+// Interface for API response
+export interface IUserResponse {
+  success: boolean;
+  data?: {
+    user: {
+      name?: string;
+      points: number;
+    };
+    rank: number;
+    totalUsers: number;
+    percentile: string;
+  };
+  message?: string;
+  error?: string;
 }

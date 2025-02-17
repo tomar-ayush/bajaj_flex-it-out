@@ -2,32 +2,68 @@
 
 import { Card } from '@/components/ui/card';
 import { Activity, Coins, Trophy } from 'lucide-react';
-
-const stats = [
-  {
-    name: 'Calories Burned',
-    value: '1,248',
-    icon: Activity,
-    change: '+12%',
-    changeType: 'positive',
-  },
-  {
-    name: 'Tokens Earned',
-    value: '2,450',
-    icon: Coins,
-    change: '+8%',
-    changeType: 'positive',
-  },
-  {
-    name: 'Leaderboard Rank',
-    value: '#12',
-    icon: Trophy,
-    change: '+3',
-    changeType: 'positive',
-  },
-];
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 
 export function UserOverview() {
+  const [rank, setRank] = useState("");
+  const [error, setError] = useState("");
+  const { status, data: session } = useSession();
+
+  // Move stats inside the component to access rank state
+  const stats = [
+    {
+      name: 'Calories Burned',
+      value: '1,248',
+      icon: Activity,
+      change: '+12%',
+      changeType: 'positive',
+    },
+    {
+      name: 'Tokens Earned',
+      value: '2,450',
+      icon: Coins,
+      change: '+8%',
+      changeType: 'positive',
+    },
+    {
+      name: 'Leaderboard Rank',
+      value: rank ? `#${rank}` : '∞',
+      icon: Trophy,
+      change: '+3',
+      changeType: 'positive',
+    },
+  ];
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const email = session?.user?.email;
+        if (!email) {
+          throw new Error('No user email found');
+        }
+
+        const response = await fetch(
+          `http://localhost:3000/api/getCurrUser?email=${encodeURIComponent(email)}`
+        );
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        setRank(data.data.rank);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setRank("∞");
+      }
+    };
+
+    if (session?.user?.email) {
+      fetchUserData();
+    }
+  }, [session]); // Add session as dependency
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {stats.map((stat) => (
@@ -45,11 +81,10 @@ export function UserOverview() {
           </div>
           <div className="mt-4">
             <span
-              className={`text-sm font-medium ${
-                stat.changeType === 'positive'
-                  ? 'text-green-600'
-                  : 'text-red-600'
-              }`}
+              className={`text-sm font-medium ${stat.changeType === 'positive'
+                ? 'text-green-600'
+                : 'text-red-600'
+                }`}
             >
               {stat.change}
             </span>

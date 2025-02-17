@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/providers/page";
 
 
 const inter = Outfit({ subsets: ["latin"] });
@@ -18,10 +19,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-       <body className={inter.className}>
+      <body className={inter.className}>
+        <Providers>
           {children}
           <Toaster />
-    </body>
+        </Providers>
+      </body>
     </html>
   );
 }
