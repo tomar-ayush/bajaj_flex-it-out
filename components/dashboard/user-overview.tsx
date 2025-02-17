@@ -30,7 +30,7 @@ export function UserOverview() {
     },
     {
       name: 'Leaderboard Rank',
-      value: rank ? `#${rank}` : '∞',
+      value: rank ? `#${rank}` : 'loading...',
       icon: Trophy,
       change: '+3',
       changeType: 'positive',
@@ -59,7 +59,7 @@ export function UserOverview() {
         setTokens(data.data.user.tokens)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        setRank("∞");
+        setRank("loading...");
       }
     };
 
