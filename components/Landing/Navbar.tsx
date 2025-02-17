@@ -92,24 +92,25 @@ export const Navbar = () => {
             </div>
 
             <div className="hidden lg:flex lg:ml-16 lg:items-center lg:justify-center lg:space-x-10 xl:space-x-16">
+            
               <a
-                href="#features"
-                className="text-base font-medium text-gray-900 transition-all duration-200 rounded focus:outline-none font-pj hover:text-opacity-50 focus:ring-1 focus:ring-gray-900 focus:ring-offset-2"
-              >
-                Features
-              </a>
-              <a
-                href="#pricing"
-                className="text-base font-medium text-gray-900 transition-all duration-200 rounded focus:outline-none font-pj hover:text-opacity-50 focus:ring-1 focus:ring-gray-900 focus:ring-offset-2"
-              >
-                Pricing
-              </a>
-              <a
-                href="#contribute"
+                href="https://github.com/Aryainguz/bajaj_flex-it-out"
                 className="text-base font-medium text-gray-900 transition-all duration-200 rounded focus:outline-none font-pj hover:text-opacity-50 focus:ring-1 focus:ring-gray-900 focus:ring-offset-2"
               >
                 Contribute
               </a>
+              <Link
+                href={"/dashboard/challenges"}
+                className="text-base font-medium text-gray-900 transition-all duration-200 rounded focus:outline-none font-pj hover:text-opacity-50 focus:ring-1 focus:ring-gray-900 focus:ring-offset-2"
+              >
+                Daily Challenges
+              </Link>
+              <Link
+                href={"/dashboard/rewards"}
+                className="text-base font-medium text-gray-900 transition-all duration-200 rounded focus:outline-none font-pj hover:text-opacity-50 focus:ring-1 focus:ring-gray-900 focus:ring-offset-2"
+              >
+                Rewards Store
+              </Link>
             </div>
 
             <div className="hidden lg:ml-auto lg:flex lg:items-center lg:space-x-10">

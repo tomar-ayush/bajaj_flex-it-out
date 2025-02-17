@@ -10,35 +10,35 @@ import { POST } from '@/app/api/auth/register/route';
 
 const products = [
   {
-    name: 'Premium Membership',
+    name: 'Gym Premium Membership',
     description: '1 Month of exclusive premium features',
-    tokens: 5000,
-    image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&q=80&w=300&h=200',
+    tokens: 500,
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     features: ['Personalized workout plans', 'Nutrition tracking', 'Priority support'],
     icon: Star,
   },
   {
-    name: 'Resistance Bands Set',
-    description: 'Professional grade resistance bands',
-    tokens: 3000,
-    image: 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?auto=format&fit=crop&q=80&w=300&h=200',
-    features: ['5 resistance levels', 'Carrying case', 'Exercise guide'],
+    name: 'Zara T Shirt',
+    description: 'Zara Cotton T Shirt',
+    tokens: 100,
+    image: 'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    features: ['5 resistance levels', '100% Cotton', 'M Size'],
     icon: Package,
   },
   {
     name: 'Smart Water Bottle',
     description: 'Track your hydration with smart sensors',
     tokens: 1,
-    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=300&h=200',
+    image: 'https://images.unsplash.com/photo-1555667865-f4be32e8cc29?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     features: ['LED indicators', 'App connectivity', 'Temperature sensing'],
     icon: Zap,
   },
   {
-    name: 'Workout Apparel Set',
-    description: 'Premium fitness clothing bundle',
+    name: 'Darjeeling Tour Package',
+    description: '3 days and 2 nights in Darjeeling',
     tokens: 4000,
-    image: 'https://images.unsplash.com/photo-1539635278303-d4002c07eae3?auto=format&fit=crop&q=80&w=300&h=200',
-    features: ['Moisture-wicking fabric', 'Compression fit', 'Multiple sizes'],
+    image: 'https://images.unsplash.com/photo-1622308644420-b20142dc993c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    features: ['Hotel stay', 'Sightseeing', 'Meals included'],
     icon: Package,
   },
 ];
@@ -52,7 +52,6 @@ export default function RewardsDashboard() {
 
   const fetchUserData = useCallback(async () => {
     try {
-      setIsLoading(true);
       const email = session?.user?.email;
       if (!email) {
         throw new Error('No user email found');
@@ -71,7 +70,6 @@ export default function RewardsDashboard() {
     } catch (err) {
       console.error("Error occurred while getting tokens:", err);
     } finally {
-      setIsLoading(false);
     }
   }, [session?.user?.email]);
 
@@ -195,7 +193,7 @@ Team 100xdevs`,
                     onClick={() => handlePurchase(product)}
                     disabled={product.tokens > tokens}
                   >
-                    {product.tokens > tokens ? 'Not Enough Tokens' : 'Redeem Now'}
+                    {product.tokens > tokens ? 'Not Enough Tokens' : isLoading ? "Redeeming..." : 'Redeem Now'}
                   </Button>
                 </div>
               </Card>
