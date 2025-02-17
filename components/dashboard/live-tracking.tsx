@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { ExerciseType, useExerciseCounter } from "@/lib/useExerciseCounter";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Button } from "../ui/button";
 
 export function LiveTracking() {
@@ -16,7 +16,7 @@ export function LiveTracking() {
     currExercise,
     setCurrExercise,
   } = useExerciseCounter();
-  
+
   useEffect(() => {
     const checkMilestone = (name: ExerciseType, count: number) => {
       if (count > 0 && count % 10 === 0) {
@@ -27,26 +27,31 @@ export function LiveTracking() {
     checkMilestone("Push-Up", exerciseCounts.pushup);
     checkMilestone("Pull-Up", exerciseCounts.pullup);
   }, [exerciseCounts]);
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
-      toast({ title: "Keep flexing! Your form is on point.", variant: "success" });
-    }, 30000);
+      toast({
+        title: "Keep flexing! Have your form on point.",
+        variant: "success",
+      });
+    }, 50000);
     return () => clearInterval(interval);
   }, []);
-  
+
   const exerciseOptions: ExerciseType[] = ["Push-Up", "Pull-Up", "Squat"];
-  
+
   return (
     <Card className="overflow-hidden">
-      <div className="border-b p-6 flex flex-col md:flex-row justify-between items-center">
+      <div className="border-b p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-          <h2 className="text-2xl font-semibold">Live Activity Tracking</h2>
+          <h2 className="text-xl md:text-2xl font-semibold">
+            Live Activity Tracking
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            AI-powered exercise detection using TensorFlow.js MoveNet
+            AI-powered exercise detection
           </p>
         </div>
-        <div className="flex gap-2 mt-4 md:mt-0">
+        <div className="flex flex-wrap gap-2 justify-center md:justify-end">
           {exerciseOptions.map((option) => (
             <Button
               key={option}
@@ -64,14 +69,12 @@ export function LiveTracking() {
           >
             {enableDetection ? "Stop Flexing" : "Start Flexing"}
           </Button>
-          <Button onClick={toggleCamera} size="sm">
-            Toggle Camera
-          </Button>
         </div>
       </div>
-      <div className="border-t border-b p-4 flex flex-wrap justify-around text-white bg-black bg-opacity-75">
+
+      <div className="border-t border-b p-4 grid grid-cols-2 md:grid-cols-4 gap-2 text-white bg-black bg-opacity-75 text-center">
         {currExercise ? (
-          <span>
+          <span className="col-span-2 md:col-span-4 text-lg font-medium">
             {currExercise}s:{" "}
             {currExercise === "Push-Up"
               ? exerciseCounts.pushup
@@ -88,6 +91,7 @@ export function LiveTracking() {
           </>
         )}
       </div>
+
       <div className="relative bg-black mx-auto w-full max-w-2xl aspect-video">
         <video
           ref={videoRef}
@@ -96,7 +100,10 @@ export function LiveTracking() {
           className="w-full h-full object-cover"
           style={{ visibility: enableDetection ? "visible" : "hidden" }}
         />
-        <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 pointer-events-none"
+        />
       </div>
     </Card>
   );
