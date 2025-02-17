@@ -3,15 +3,15 @@
 import { cn } from "@/lib/utils";
 import logo from "@/public/logo.png";
 import {
-  Camera,
   Gift,
   LayoutDashboard,
   LogOut,
   Menu,
+  Rocket,
   Settings,
   Trophy,
   User,
-  X,
+  X
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,9 +20,9 @@ import { useState } from "react";
 import { ThemeToggle } from "./theme-toggle";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Track Activity", href: "/track", icon: Camera },
-  { name: "Rewards Store", href: "/rewards", icon: Gift },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Daily Challenges", href: "/dashboard/challenges", icon: Rocket },
+  { name: "Rewards Store", href: "/dashboard/rewards", icon: Gift },
   { name: "Challenges", href: "/challenges", icon: Trophy },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

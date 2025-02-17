@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { ExerciseType, useExerciseCounter } from "@/lib/useExerciseCounter";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 
 export function LiveTracking() {
@@ -17,38 +17,51 @@ export function LiveTracking() {
     setCurrExercise,
   } = useExerciseCounter();
 
+  const startAudioRef = useRef<HTMLAudioElement | null>(null);
+  const milestoneAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Play sound when a new exercise starts
+  useEffect(() => {
+    if (currExercise && startAudioRef.current) {
+      startAudioRef.current
+        .play()
+        .catch((err) => console.error("Start Audio Error:", err));
+    }
+  }, [currExercise]);
+
+  // Play beep sound on milestone reps
   useEffect(() => {
     const checkMilestone = (name: ExerciseType, count: number) => {
-      if (count > 0 && count % 10 === 0) {
+      if (count > 0 && count % 5 === 0) {
+        // Change to 10 if needed
+        if (milestoneAudioRef.current) {
+          milestoneAudioRef.current
+            .play()
+            .catch((err) => console.error("Beep Audio Error:", err));
+        }
         toast({ title: `Milestone: ${count} ${name}s!`, variant: "success" });
       }
     };
+
     checkMilestone("Squat", exerciseCounts.squat);
     checkMilestone("Push-Up", exerciseCounts.pushup);
     checkMilestone("Pull-Up", exerciseCounts.pullup);
   }, [exerciseCounts]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      toast({
-        title: "Keep flexing! Have your form on point.",
-        variant: "success",
-      });
-    }, 50000);
-    return () => clearInterval(interval);
-  }, []);
-
   const exerciseOptions: ExerciseType[] = ["Push-Up", "Pull-Up", "Squat"];
 
   return (
     <Card className="overflow-hidden">
+      <audio ref={startAudioRef} src="/start.mp3" preload="auto" />
+      <audio ref={milestoneAudioRef} src="/start.mp3" preload="auto" />
+
       <div className="border-b p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-semibold">
             Live Activity Tracking
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            AI-powered exercise detection
+            AI-powered exercise detection using TensorFlow.js MoveNet
           </p>
         </div>
         <div className="flex flex-wrap gap-2 justify-center md:justify-end">
@@ -72,6 +85,7 @@ export function LiveTracking() {
         </div>
       </div>
 
+      {/* Exercise Count Section */}
       <div className="border-t border-b p-4 grid grid-cols-2 md:grid-cols-4 gap-2 text-white bg-black bg-opacity-75 text-center">
         {currExercise ? (
           <span className="col-span-2 md:col-span-4 text-lg font-medium">
@@ -92,6 +106,7 @@ export function LiveTracking() {
         )}
       </div>
 
+      {/* Video & Canvas Section */}
       <div className="relative bg-black mx-auto w-full max-w-2xl aspect-video">
         <video
           ref={videoRef}
