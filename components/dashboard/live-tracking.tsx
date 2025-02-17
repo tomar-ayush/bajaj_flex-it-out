@@ -1,7 +1,7 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { ExerciseType, useExerciseCounter } from "@/lib/useExerciseCounter";
+import { ExerciseType, useExerciseCounter } from "@/hooks/useExerciseCounter";
 import { useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 

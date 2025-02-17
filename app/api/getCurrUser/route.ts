@@ -3,6 +3,9 @@ import { User } from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
 import { IUserLean, IUserResponse } from "@/types/user";
 
+
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest): Promise<NextResponse<IUserResponse>> {
 	try {
 		await connectDB();
