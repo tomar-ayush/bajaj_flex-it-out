@@ -42,7 +42,7 @@ export const Hero = () => {
                       alt=""
                     />
                     <p className="ml-5 text-base font-bold leading-6 text-gray-900">
-                      <Link href={'/store/coffee-mug'}>
+                      <Link href={'/dashboard/rewards'}>
                         Coffee Mug
                         <span
                           className="absolute inset-0"
@@ -61,7 +61,7 @@ export const Hero = () => {
                       alt=""
                     />
                     <p className="ml-5 text-base font-bold leading-6 text-gray-900">
-                      <Link href={'/store/github-tshirt'}>
+                      <Link href={'/dashboard/rewards'}>
                         GitHub T-Shirt
                         <span
                           className="absolute inset-0"
@@ -80,7 +80,7 @@ export const Hero = () => {
                       alt=""
                     />
                     <p className="ml-5 text-base font-bold leading-6 text-gray-900">
-                      <Link href={'/store/relaxing-chair'}>
+                      <Link href={'/dashboard/rewards'}>
                         Relaxing Chair
                         <span
                           className="absolute inset-0"
