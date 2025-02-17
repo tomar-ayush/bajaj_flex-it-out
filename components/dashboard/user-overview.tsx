@@ -44,7 +44,7 @@ export function UserOverview() {
         }
 
         const response = await fetch(
-          `${process.env.PORT}/api/getCurrUser?email=${encodeURIComponent(email)}`
+          `/api/getCurrUser?email=${encodeURIComponent(email)}`
         );
 
         if (!response.ok) {

@@ -25,7 +25,10 @@ const userSchema = new mongoose.Schema<IUser>({
     required: true,
   },
   emailVerified: Date,
-  image: String,
+  image: {
+    type: String,
+    default: "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?t=st=1739812418~exp=1739816018~hmac=2442be3cd30435c77e5ab68924abe83003c70c93db0a9ef781b4625d57154d82&w=740",
+  },
   points: {
     type: Number,
     default: 0,
