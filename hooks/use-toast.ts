@@ -152,6 +152,7 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
+      style: props.style || (props.variant === "success" ? { backgroundColor: "green", color: "white" } : {}),
       onOpenChange: (open) => {
         if (!open) dismiss();
       },
