@@ -45,10 +45,10 @@ const challenges = [
 
 export default function ChallengesDashboard() {
   return (
-    <div className="flex h-screen bg-background">
-      <div className="w-64 hidden md:block">
-        <Sidebar />
-      </div>
+    <div className="block sm:flex h-screen bg-background">
+     <div className="w-[100%] sm:w-64 block">
+             <Sidebar />
+           </div>
       <main className="flex-1 overflow-y-auto p-8">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8">

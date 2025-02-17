@@ -24,7 +24,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Daily Challenges", href: "/dashboard/challenges", icon: Rocket },
   { name: "Rewards Store", href: "/dashboard/rewards", icon: Gift },
-  { name: "Challenges", href: "/challenges", icon: Trophy },
+  { name: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
