@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { signIn } from "next-auth/react";
 import React, { useState } from "react";
 import { validateRegistrationForm } from "@/utils/validation-utils";
+import { toast } from "@/hooks/use-toast";
 
 interface FormErrors {
   [key: string]: string;
@@ -98,6 +99,7 @@ export function RegisterForm({
       });
     } finally {
       setIsLoading(false);
+      toast({ title: "User created succesfully", variant: "success" })
     }
   };
 
@@ -129,7 +131,7 @@ export function RegisterForm({
       }
 
       setOtpSent(true);
-      window.alert("OTP sent successfully");
+      toast({ title: "OTP sent succesfully", variant: "success" })
     } catch (error) {
       setErrors({
         otp: error instanceof Error ? error.message : "Failed to send OTP",
