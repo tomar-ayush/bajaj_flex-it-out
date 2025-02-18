@@ -45,7 +45,7 @@ export function LoginForm({
       setError(error instanceof Error ? error.message : "Failed to login");
     } finally {
       setIsLoading(false);
-      toast({ title: "User Logged-In succesfully", variant: "success" })
+      // toast({ title: "User Logged-In succesfully", variant: "success" })
     }
   };
 

@@ -99,7 +99,7 @@ export function RegisterForm({
       });
     } finally {
       setIsLoading(false);
-      toast({ title: "User created succesfully", variant: "success" })
+      // toast({ title: "User created succesfully", variant: "success" })
     }
   };
 
