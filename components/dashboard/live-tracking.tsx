@@ -21,13 +21,18 @@ export function LiveTracking() {
   const startAudioRef = useRef<HTMLAudioElement | null>(null);
   const milestoneAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Play sound when a new exercise starts
+
+  useEffect(() => { 
+    toast({ title: `Click on start flexing button to get started!`, variant: "success" });
+  }, []);
+
   useEffect(() => {
     if (currExercise && startAudioRef.current) {
       startAudioRef.current
         .play()
         .catch((err) => console.error("Start Audio Error:", err));
     }
+    
   }, [currExercise]);
 
   // Play beep sound on milestone reps
@@ -77,6 +82,10 @@ export function LiveTracking() {
             </Button>
           ))}
           <Button
+           style={{
+            color: '#3b82f6', 
+            boxShadow: '0 0 10px rgba(59, 130, 246, 0.8)',
+          }}
             variant={enableDetection ? "default" : "outline"}
             onClick={toggleCamera}
             size="sm"

@@ -16,21 +16,21 @@ export function UserOverview() {
   const stats = [
     {
       name: 'Calories Burned',
-      value: calories ? `${calories}` : "0",
+      value:  calories == "loading..." ? "loading..." : calories ? `${calories} cal` : '0 cal',
       icon: Activity,
       change: '+12%',
       changeType: 'positive',
     },
     {
       name: 'Tokens Earned',
-      value: tokens ? tokens : "0",
+      value: tokens == "loading..." ? "loading..." : tokens ? `${tokens}` : '0',
       icon: Coins,
       change: '+8%',
       changeType: 'positive',
     },
     {
       name: 'Leaderboard Rank',
-      value: rank ? `#${rank}` : '0',
+      value: rank == "loading..." ? "loading..." : rank ? `#${rank}` : 'N/A',
       icon: Trophy,
       change: '+3',
       changeType: 'positive',
@@ -54,9 +54,9 @@ export function UserOverview() {
         }
 
         const data = await response.json();
-        setRank(data.data.rank);
         setCalories(data.data.user.calories);
         setTokens(data.data.user.tokens)
+        setRank(data.data.rank);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
         setRank("loading...");

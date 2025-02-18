@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   Rocket,
+  Settings,
   Trophy,
   User,
   X
@@ -24,6 +25,7 @@ const navigation = [
   { name: "Daily Challenges", href: "/dashboard/challenges", icon: Rocket },
   { name: "Rewards Store", href: "/dashboard/rewards", icon: Gift },
   { name: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
