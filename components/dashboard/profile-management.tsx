@@ -1,39 +1,72 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useSession } from "next-auth/react"
 
 type FormValues = {
+  name: string
   email: string
   currentPassword: string
   newPassword: string
-  name: string
 }
 
 export default function UpdateProfileForm() {
+  const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<FormValues>({
     defaultValues: {
-      email: "user@example.com", // This would typically come from your auth state
+      name: "",
+      email: "user@example.com",
       currentPassword: "",
       newPassword: "",
-      name: "",
     },
   })
 
-  function onSubmit(values: FormValues) {
+
+  useEffect(() => {
+    if (session?.user?.name) {
+      form.setValue("name", session.user.name);
+    }
+    if (session?.user?.email) {
+      form.setValue("email", session.user.email);
+    }
+  }, [session, form]);
+
+  async function onSubmit(values: FormValues) {
     setIsLoading(true)
-    // Here you would typically send the form data to your backend
-    console.log(values)
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/user/updateUserProfile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: values.name,
+          email: session?.user?.email,
+          curr_password: values.currentPassword,
+          new_password: values.newPassword,
+        }),
+      });
+
+      if (response.ok) {
+        // Handle successful response
+        console.log('Profile updated successfully');
+      } else {
+        // Handle error response
+        const errorData = await response.json();
+        console.error('Error updating profile:', errorData.message);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
       setIsLoading(false)
-      // Reset form or show success message
-    }, 2000)
+    }
   }
 
   return (
@@ -45,6 +78,25 @@ export default function UpdateProfileForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              rules={{
+                required: "Name is required",
+                minLength: { value: 2, message: "Name must be at least 2 characters" },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
             <FormField
               control={form.control}
               name="email"
@@ -86,23 +138,6 @@ export default function UpdateProfileForm() {
                   <FormLabel>New Password</FormLabel>
                   <FormControl>
                     <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="name"
-              rules={{
-                required: "Name is required",
-                minLength: { value: 2, message: "Name must be at least 2 characters" },
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
