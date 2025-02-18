@@ -36,14 +36,13 @@ export const authOptions: NextAuthOptions = {
 				}
 				*/
 				await connectDB();
+				console.log("Database connected");
+
 				try {
-					// Find user
 					const user = await User.findOne({
-						$or: [
-							{ email: credentials.identifier },
-							{ username: credentials.identifier }
-						]
+						email: credentials.email
 					}).lean() as IUserLean | null;
+
 
 					if (!user || !user.password) {
 						throw new Error("No user found with this email");
@@ -54,6 +53,7 @@ export const authOptions: NextAuthOptions = {
 						credentials.password,
 						user.password
 					);
+
 
 					if (!isValid) {
 						throw new Error("Invalid password");
@@ -78,16 +78,16 @@ export const authOptions: NextAuthOptions = {
 		async signIn({ user, account, profile }) {
 			try {
 				await connectDB();
-				console.log("SignIn Callback - User:", JSON.stringify(user, null, 2));
 
 				if (account?.provider === "google") {
 					const existingUser = await User.findOne({ email: user.email });
 
 					if (!existingUser) {
+						const new_password = bcrypt.hash("oauth_password", 10)
 						await User.create({
 							name: user.name,
 							email: user.email,
-							password: "oauth_password",
+							password: new_password,
 							points: 0,
 							image: user.image
 						});
