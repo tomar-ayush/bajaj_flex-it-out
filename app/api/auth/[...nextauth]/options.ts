@@ -83,7 +83,7 @@ export const authOptions: NextAuthOptions = {
 					const existingUser = await User.findOne({ email: user.email });
 
 					if (!existingUser) {
-						const new_password = bcrypt.hash("oauth_password", 10)
+						const new_password = await bcrypt.hash("oauth_password", 10)
 						await User.create({
 							name: user.name,
 							email: user.email,
