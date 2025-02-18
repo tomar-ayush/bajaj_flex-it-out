@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useSession } from "next-auth/react"
+import { toast } from "@/hooks/use-toast"
 
 type FormValues = {
   name: string
@@ -30,9 +31,6 @@ export default function UpdateProfileForm() {
 
 
   useEffect(() => {
-    if (session?.user?.name) {
-      form.setValue("name", session.user.name);
-    }
     if (session?.user?.email) {
       form.setValue("email", session.user.email);
     }
@@ -55,11 +53,11 @@ export default function UpdateProfileForm() {
       });
 
       if (response.ok) {
-        // Handle successful response
-        console.log('Profile updated successfully');
+        toast({ title: "User Updated Succesfully", variant: "success" });
       } else {
-        // Handle error response
         const errorData = await response.json();
+        toast({ title: `${errorData.message}` });
+
         console.error('Error updating profile:', errorData.message);
       }
     } catch (error) {
@@ -130,7 +128,6 @@ export default function UpdateProfileForm() {
               control={form.control}
               name="newPassword"
               rules={{
-                required: "New password is required",
                 minLength: { value: 8, message: "Password must be at least 8 characters" },
               }}
               render={({ field }) => (

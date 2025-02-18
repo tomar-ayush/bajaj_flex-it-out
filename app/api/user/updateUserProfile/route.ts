@@ -10,7 +10,7 @@ export async function PUT(req: NextRequest) {
 		const body = await req.json();
 		const { name, email, curr_password, new_password } = body;
 
-		if (!email || !curr_password || !new_password) {
+		if (!email || !curr_password) {
 			return NextResponse.json(
 				{ message: "Missing required fields" },
 				{ status: 400 }
@@ -26,12 +26,6 @@ export async function PUT(req: NextRequest) {
 			);
 		}
 
-		if (name !== undefined) {
-			user.name = name;
-		}
-
-		console.log(`${name} ${email} ${curr_password} ${new_password}`);
-
 		const isValid = await bcrypt.compare(curr_password, user.password);
 
 		if (!isValid) {
@@ -41,12 +35,17 @@ export async function PUT(req: NextRequest) {
 			);
 		}
 
-		const hashedNewPassword = await bcrypt.hash(new_password, 10);
-		user.password = hashedNewPassword;
-		console.log("Password updated");
+
+		if (name !== undefined) {
+			user.name = name;
+		}
+
+		if (new_password !== undefined && new_password !== "") {
+			const hashedNewPassword = await bcrypt.hash(new_password, 10);
+			user.password = hashedNewPassword;
+		}
 
 		await user.save();
-		console.log("User data saved");
 
 		return NextResponse.json(
 			{ message: "User updated successfully" },
