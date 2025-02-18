@@ -10,9 +10,9 @@ const leaderboardDashboard = () => {
       <main className="flex-1 overflow-y-auto p-8">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-blue-500">Leaderboard</h1>
+            <h1 className="text-3xl font-bold text-blue-500">Manage Profile</h1>
             <p className="text-muted-foreground mt-2">
-                Compete with others to earn tokens and climb the leaderboard
+              Update your profile details here.
             </p>
           </div>
           <div className="grid gap-6">
