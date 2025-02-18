@@ -10,14 +10,12 @@ import { User } from "@/models/user";
 import { Adapter } from "next-auth/adapters";
 
 export const authOptions: NextAuthOptions = {
-	//	debug: true,
 	providers: [
 		GoogleProvider({
 			clientId: process.env.GOOGLE_CLIENT_ID!,
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
 			authorization: {
 				params: {
-					prompt: "select_account",
 					access_type: "offline",
 					response_type: "code"
 				}
@@ -36,7 +34,6 @@ export const authOptions: NextAuthOptions = {
 				}
 				*/
 				await connectDB();
-				console.log("Database connected");
 
 				try {
 					const user = await User.findOne({
@@ -59,7 +56,6 @@ export const authOptions: NextAuthOptions = {
 						throw new Error("Invalid password");
 					}
 
-					// Return user object
 					return {
 						id: user._id.toString(),
 						email: user.email,
@@ -83,7 +79,7 @@ export const authOptions: NextAuthOptions = {
 					const existingUser = await User.findOne({ email: user.email });
 
 					if (!existingUser) {
-						const new_password = await bcrypt.hash("oauth_password", 10)
+						const new_password = await bcrypt.hash(process.env.OAUTH_GOOGLE_PASS as string, 10)
 						await User.create({
 							name: user.name,
 							email: user.email,
@@ -119,17 +115,6 @@ export const authOptions: NextAuthOptions = {
 				}
 			}
 			return session;
-		},
-	},
-	events: {
-		async signIn({ user }) {
-			console.log("SignIn event:", user);
-		},
-		async createUser({ user }) {
-			console.log("Create user event:", user);
-		},
-		async linkAccount({ account, user }) {
-			console.log("Link account event:", { account, user });
 		},
 	},
 	pages: {
