@@ -170,7 +170,7 @@ export function Sidebar() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/profile"
+                  href="/dashboard/profile"
                   className="block rounded-md px-4 py-2 hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setProfileModalOpen(false)}
                 >
