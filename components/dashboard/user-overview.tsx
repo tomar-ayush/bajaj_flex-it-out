@@ -16,21 +16,21 @@ export function UserOverview() {
   const stats = [
     {
       name: 'Calories Burned',
-      value: calories ? `${calories}` : "loading...",
+      value: calories ? `${calories}` : "0",
       icon: Activity,
       change: '+12%',
       changeType: 'positive',
     },
     {
       name: 'Tokens Earned',
-      value: tokens ? tokens : "loading...",
+      value: tokens ? tokens : "0",
       icon: Coins,
       change: '+8%',
       changeType: 'positive',
     },
     {
       name: 'Leaderboard Rank',
-      value: rank ? `#${rank}` : 'loading...',
+      value: rank ? `#${rank}` : '0',
       icon: Trophy,
       change: '+3',
       changeType: 'positive',
