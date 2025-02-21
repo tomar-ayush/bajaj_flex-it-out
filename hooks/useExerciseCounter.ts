@@ -41,6 +41,10 @@ export function useExerciseCounter() {
     exerciseCounts.bicepCurl;
   const { data: session } = useSession();
 
+  // New state for live rep feedback.
+  const [repFeedback, setRepFeedback] = useState<string>("");
+  const [liveFeedback, setLiveFeedback] = useState<string>("");
+
   // Refs to track movement state for counting reps.
   const pushUpDownRef = useRef<boolean>(false);
   const pullUpDownRef = useRef<boolean>(false);
@@ -55,7 +59,8 @@ export function useExerciseCounter() {
     C: posedetection.Keypoint
   ) => {
     const angle =
-      Math.atan2(C.y - B.y, C.x - B.x) - Math.atan2(A.y - B.y, A.x - B.x);
+      Math.atan2(C.y - B.y, C.x - B.x) -
+      Math.atan2(A.y - B.y, A.x - B.x);
     let degree = Math.abs((angle * 180) / Math.PI);
     if (degree > 180) degree = 360 - degree;
     return degree;
@@ -97,159 +102,23 @@ export function useExerciseCounter() {
 
   useEffect(() => {
     if (enableDetection && !currExercise) {
-      setCurrExercise("Squat");
+      setCurrExercise("Bicep Curl");
     }
   }, [enableDetection, currExercise]);
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (!poseDetector || !enableDetection || !videoRef.current) return;
-      const video = videoRef.current;
-      if (video.readyState < 2) return;
-      if (
-        canvasRef.current &&
-        video.videoWidth &&
-        video.videoHeight &&
-        (canvasRef.current.width !== video.videoWidth ||
-          canvasRef.current.height !== video.videoHeight)
-      ) {
-        canvasRef.current.width = video.videoWidth;
-        canvasRef.current.height = video.videoHeight;
-      }
-      const poses = await poseDetector.estimatePoses(video);
-      if (poses && poses.length > 0) {
-        const pose = poses[0];
-        if (currExercise) {
-          switch (currExercise) {
-            case "Push-Up": {
-              const leftAngle = calculateAngle(
-                pose.keypoints[5],
-                pose.keypoints[7],
-                pose.keypoints[9]
-              );
-              const rightAngle = calculateAngle(
-                pose.keypoints[6],
-                pose.keypoints[8],
-                pose.keypoints[10]
-              );
-              if (leftAngle < 90 && rightAngle < 90) {
-                pushUpDownRef.current = true;
-              }
-              if (pushUpDownRef.current && leftAngle > 160 && rightAngle > 160) {
-                setExerciseCounts((prev) => ({ ...prev, pushup: prev.pushup + 1 }));
-                pushUpDownRef.current = false;
-              }
-              break;
-            }
-            case "Pull-Up": {
-              const leftAngle = calculateAngle(
-                pose.keypoints[5],
-                pose.keypoints[7],
-                pose.keypoints[9]
-              );
-              const rightAngle = calculateAngle(
-                pose.keypoints[6],
-                pose.keypoints[8],
-                pose.keypoints[10]
-              );
-              if (leftAngle > 160 && rightAngle > 160) {
-                pullUpDownRef.current = true;
-              }
-              if (pullUpDownRef.current && leftAngle < 50 && rightAngle < 50) {
-                setExerciseCounts((prev) => ({ ...prev, pullup: prev.pullup + 1 }));
-                pullUpDownRef.current = false;
-              }
-              break;
-            }
-            case "Squat": {
-              const leftKneeAngle = calculateAngle(
-                pose.keypoints[11],
-                pose.keypoints[13],
-                pose.keypoints[15]
-              );
-              const rightKneeAngle = calculateAngle(
-                pose.keypoints[12],
-                pose.keypoints[14],
-                pose.keypoints[16]
-              );
-              if (leftKneeAngle < 90 && rightKneeAngle < 90) {
-                squatDownRef.current = true;
-              }
-              if (squatDownRef.current && leftKneeAngle > 160 && rightKneeAngle > 160) {
-                setExerciseCounts((prev) => ({ ...prev, squat: prev.squat + 1 }));
-                squatDownRef.current = false;
-              }
-              break;
-            }
-            case "Shoulder Press": {
-              const leftAngle = calculateAngle(
-                pose.keypoints[5],
-                pose.keypoints[7],
-                pose.keypoints[9]
-              );
-              const rightAngle = calculateAngle(
-                pose.keypoints[6],
-                pose.keypoints[8],
-                pose.keypoints[10]
-              );
-              if (leftAngle > 160 && rightAngle > 160) {
-                shoulderPressDownRef.current = true;
-              }
-              if (shoulderPressDownRef.current && (leftAngle < 90 || rightAngle < 90)) {
-                setExerciseCounts((prev) => ({
-                  ...prev,
-                  shoulderPress: prev.shoulderPress + 1,
-                }));
-                shoulderPressDownRef.current = false;
-              }
-              break;
-            }
-            case "Bicep Curl": {
-              const leftAngle = calculateAngle(
-                pose.keypoints[5],
-                pose.keypoints[7],
-                pose.keypoints[9]
-              );
-              const rightAngle = calculateAngle(
-                pose.keypoints[6],
-                pose.keypoints[8],
-                pose.keypoints[10]
-              );
-              if (leftAngle < 50 && rightAngle < 50) {
-                bicepCurlDownRef.current = true;
-              }
-              if (bicepCurlDownRef.current && leftAngle > 150 && rightAngle > 150) {
-                setExerciseCounts((prev) => ({
-                  ...prev,
-                  bicepCurl: prev.bicepCurl + 1,
-                }));
-                bicepCurlDownRef.current = false;
-              }
-              break;
-            }
-            default:
-              break;
-          }
-        }
-        drawPose(pose);
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [poseDetector, enableDetection, currExercise, calculateAngle]);
 
 
-  const drawPose = useCallback((pose: posedetection.Pose) => {
+  
+  const drawPose = useCallback((pose: posedetection.Pose, accuracy?: number) => {
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
     ctx.save();
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     const threshold = 0.3;
-    // Draw keypoints.
     pose.keypoints.forEach((kp, index) => {
       if (kp.score && kp.score > threshold && kp.x >= 0 && kp.y >= 0) {
         ctx.beginPath();
-        // For wrists, draw larger blue circles.
         if (index === 9 || index === 10) {
           ctx.arc(kp.x, kp.y, 8, 0, 2 * Math.PI);
           ctx.fillStyle = "blue";
@@ -282,8 +151,197 @@ export function useExerciseCounter() {
         ctx.stroke();
       }
     });
+    if (typeof accuracy === "number") {
+      ctx.font = "20px Arial";
+      ctx.fillStyle = "lime";
+      // ctx.fillText(`Accuracy: ${accuracy}%`, 10, 30);
+    }
     ctx.restore();
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!poseDetector || !enableDetection || !videoRef.current) return;
+      const video = videoRef.current;
+      if (video.readyState < 2) return;
+      if (
+        canvasRef.current &&
+        video.videoWidth &&
+        video.videoHeight &&
+        (canvasRef.current.width !== video.videoWidth ||
+          canvasRef.current.height !== video.videoHeight)
+      ) {
+        canvasRef.current.width = video.videoWidth;
+        canvasRef.current.height = video.videoHeight;
+      }
+      const poses = await poseDetector.estimatePoses(video);
+      let computedAccuracy = 0;
+      if (poses && poses.length > 0) {
+        const pose = poses[0];
+        if (currExercise) {
+          switch (currExercise) {
+            case "Push-Up": {
+              const leftAngle = calculateAngle(
+                pose.keypoints[5],
+                pose.keypoints[7],
+                pose.keypoints[9]
+              );
+              const rightAngle = calculateAngle(
+                pose.keypoints[6],
+                pose.keypoints[8],
+                pose.keypoints[10]
+              );
+              if (leftAngle < 90 && rightAngle < 90) {
+                pushUpDownRef.current = true;
+              }
+              if (pushUpDownRef.current && leftAngle > 160 && rightAngle > 160) {
+                // Compute rep accuracy (ideal = 160°)
+                const avgAngle = (leftAngle + rightAngle) / 2;
+                const repAcc = Math.max(0, Math.round(100 - Math.abs(avgAngle - 160)));
+                setExerciseCounts((prev) => ({ ...prev, pushup: prev.pushup + 1 }));
+                setRepFeedback(repAcc >= 90 ? "Good Posture, Keep Going!" : "Try to improve your form!");
+                setTimeout(() => setRepFeedback(""), 5000);
+                pushUpDownRef.current = false;
+              }
+              {
+                const avgAngle = (leftAngle + rightAngle) / 2;
+                const ideal = pushUpDownRef.current ? 90 : 160;
+                computedAccuracy = Math.max(0, Math.round(100 - Math.abs(avgAngle - ideal)));
+              }
+              break;
+            }
+            case "Pull-Up": {
+              const leftAngle = calculateAngle(
+                pose.keypoints[5],
+                pose.keypoints[7],
+                pose.keypoints[9]
+              );
+              const rightAngle = calculateAngle(
+                pose.keypoints[6],
+                pose.keypoints[8],
+                pose.keypoints[10]
+              );
+              if (leftAngle > 160 && rightAngle > 160) {
+                pullUpDownRef.current = true;
+              }
+              if (pullUpDownRef.current && leftAngle < 50 && rightAngle < 50) {
+                const avgAngle = (leftAngle + rightAngle) / 2;
+                const repAcc = Math.max(0, Math.round(100 - Math.abs(avgAngle - 50)));
+                setExerciseCounts((prev) => ({ ...prev, pullup: prev.pullup + 1 }));
+                setRepFeedback(repAcc >= 90 ? "Good Posture, Keep Going!!" : "Try to improve your form!");
+                setTimeout(() => setRepFeedback(""), 5000);
+                pullUpDownRef.current = false;
+              }
+              {
+                const avgAngle = (leftAngle + rightAngle) / 2;
+                const ideal = pullUpDownRef.current ? 50 : 160;
+                computedAccuracy = Math.max(0, Math.round(100 - Math.abs(avgAngle - ideal)));
+              }
+              break;
+            }
+            case "Squat": {
+              const leftKneeAngle = calculateAngle(
+                pose.keypoints[11],
+                pose.keypoints[13],
+                pose.keypoints[15]
+              );
+              const rightKneeAngle = calculateAngle(
+                pose.keypoints[12],
+                pose.keypoints[14],
+                pose.keypoints[16]
+              );
+              if (leftKneeAngle < 90 && rightKneeAngle < 90) {
+                squatDownRef.current = true;
+              }
+              if (squatDownRef.current && leftKneeAngle > 160 && rightKneeAngle > 160) {
+                const avgKnee = (leftKneeAngle + rightKneeAngle) / 2;
+                const repAcc = Math.max(0, Math.round(100 - Math.abs(avgKnee - 160)));
+                setExerciseCounts((prev) => ({ ...prev, squat: prev.squat + 1 }));
+                setRepFeedback(repAcc >= 90 ? "Good Posture, Keep Going!!" : "Try to improve your form!");
+                setTimeout(() => setRepFeedback(""), 5000);
+                squatDownRef.current = false;
+              }
+              {
+                const avgKnee = (leftKneeAngle + rightKneeAngle) / 2;
+                const ideal = squatDownRef.current ? 90 : 160;
+                computedAccuracy = Math.max(0, Math.round(100 - Math.abs(avgKnee - ideal)));
+              }
+              break;
+            }
+            case "Shoulder Press": {
+              const leftAngle = calculateAngle(
+                pose.keypoints[5],
+                pose.keypoints[7],
+                pose.keypoints[9]
+              );
+              const rightAngle = calculateAngle(
+                pose.keypoints[6],
+                pose.keypoints[8],
+                pose.keypoints[10]
+              );
+              // Mark "up" phase when both angles are greater than 130°.
+              if (leftAngle > 130 && rightAngle > 130) {
+                shoulderPressDownRef.current = true;
+              }
+              // Count rep when, after being "up", at least one angle drops below 110°.
+              if (shoulderPressDownRef.current && (leftAngle < 110 || rightAngle < 110)) {
+                setExerciseCounts((prev) => ({
+                  ...prev,
+                  shoulderPress: prev.shoulderPress + 1,
+                }));
+                shoulderPressDownRef.current = false;
+              }
+              {
+                const avgAngle = (leftAngle + rightAngle) / 2;
+                const ideal = shoulderPressDownRef.current ? 110 : 130;
+                computedAccuracy = Math.max(0, Math.round(100 - Math.abs(avgAngle - ideal)));
+              }
+              break;
+            }
+            
+            case "Bicep Curl": {
+              const leftAngle = calculateAngle(
+                pose.keypoints[5],
+                pose.keypoints[7],
+                pose.keypoints[9]
+              );
+              const rightAngle = calculateAngle(
+                pose.keypoints[6],
+                pose.keypoints[8],
+                pose.keypoints[10]
+              );
+              if (leftAngle < 50 && rightAngle < 50) {
+                bicepCurlDownRef.current = true;
+              }
+              if (bicepCurlDownRef.current && leftAngle > 150 && rightAngle > 150) {
+                const avgAngle = (leftAngle + rightAngle) / 2;
+                const repAcc = Math.max(0, Math.round(100 - Math.abs(avgAngle - 150)));
+                setExerciseCounts((prev) => ({
+                  ...prev,
+                  bicepCurl: prev.bicepCurl + 1,
+                }));
+                setRepFeedback(repAcc >= 90 ? "Good Posture, Keep Going!!" : "Try to improve your form!");
+                setTimeout(() => setRepFeedback(""), 5000);
+                bicepCurlDownRef.current = false;
+              }
+              {
+                const avgAngle = (leftAngle + rightAngle) / 2;
+                const ideal = bicepCurlDownRef.current ? 50 : 150;
+                computedAccuracy = Math.max(0, Math.round(100 - Math.abs(avgAngle - ideal)));
+              }
+              break;
+            }
+            default:
+              break;
+          }
+        }
+        setLiveFeedback(`Accuracy: ${computedAccuracy}%`);
+        drawPose(pose, computedAccuracy);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [poseDetector, enableDetection, currExercise, calculateAngle, drawPose]);
+
 
   useEffect(() => {
     if (totalReps > 0) {
@@ -317,6 +375,8 @@ export function useExerciseCounter() {
     toggleCamera,
     currExercise,
     setCurrExercise,
+    liveFeedback,
+    repFeedback,
   };
 }
 

@@ -16,6 +16,7 @@ export function LiveTracking() {
     currExercise,
     setCurrExercise,
     liveFeedback,
+    repFeedback,
   } = useExerciseCounter();
 
   const startAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -42,7 +43,7 @@ export function LiveTracking() {
             .play()
             .catch((err) => console.error("Milestone Audio Error:", err));
         }
-        toast({ title: `Milestone: ${count} ${name}s!`, variant: "success" });
+        toast({ title: `Milestone: ${count} ${name}(s)!`, variant: "success" });
       }
     };
     checkMilestone("Squat", exerciseCounts.squat);
@@ -112,20 +113,25 @@ export function LiveTracking() {
           </span>
         ) : (
           <>
-            <span>Push-Ups: {exerciseCounts.pushup}</span>
-            <span>Pull-Ups: {exerciseCounts.pullup}</span>
-            <span>Squats: {exerciseCounts.squat}</span>
-            <span>Shoulder Press: {exerciseCounts.shoulderPress}</span>
-            <span>Bicep Curl: {exerciseCounts.bicepCurl}</span>
-            <span>Total: {totalReps}</span>
+           <span className="col-span-2 md:col-span-4 text-lg font-medium">
+            Click on start flexing button to get started!
+          </span>
           </>
         )}
       </div>
 
+      {/* Video Container with live feedback labels */}
       <div className="relative bg-black mx-auto w-full aspect-video">
+        {/* Live accuracy feedback label */}
         <div className="absolute top-2 left-2 z-10 bg-black bg-opacity-50 px-2 py-1 rounded text-green-500 text-sm">
           {liveFeedback}
         </div>
+        {/* Rep feedback label (if available) */}
+        {repFeedback && (
+          <div className="absolute top-10 left-2 z-10 bg-black bg-opacity-50 px-2 py-1 rounded text-white text-sm">
+            {repFeedback}
+          </div>
+        )}
         <video
           ref={videoRef}
           autoPlay
