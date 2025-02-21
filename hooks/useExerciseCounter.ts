@@ -5,11 +5,19 @@ import "@tensorflow/tfjs-backend-webgl";
 import * as tf from "@tensorflow/tfjs";
 import { useSession } from "next-auth/react";
 
-export type ExerciseType = "Push-Up" | "Pull-Up" | "Squat";
+export type ExerciseType =
+  | "Push-Up"
+  | "Pull-Up"
+  | "Squat"
+  | "Shoulder Press"
+  | "Bicep Curl";
+
 export type ExerciseCounts = {
   pushup: number;
   pullup: number;
   squat: number;
+  shoulderPress: number;
+  bicepCurl: number;
 };
 
 export function useExerciseCounter() {
@@ -22,13 +30,36 @@ export function useExerciseCounter() {
     pushup: 0,
     pullup: 0,
     squat: 0,
+    shoulderPress: 0,
+    bicepCurl: 0,
   });
-  const [pullDownFrames, setPullDownFrames] = useState(0);
-  const [squatDownFrames, setSquatDownFrames] = useState(0);
-  const totalReps = exerciseCounts.pushup + exerciseCounts.pullup + exerciseCounts.squat;
-  
-  const pushDownRef = useRef<number>(0);
+  const totalReps =
+    exerciseCounts.pushup +
+    exerciseCounts.pullup +
+    exerciseCounts.squat +
+    exerciseCounts.shoulderPress +
+    exerciseCounts.bicepCurl;
   const { data: session } = useSession();
+
+  // Refs to track movement state for counting reps.
+  const pushUpDownRef = useRef<boolean>(false);
+  const pullUpDownRef = useRef<boolean>(false);
+  const squatDownRef = useRef<boolean>(false);
+  const shoulderPressDownRef = useRef<boolean>(false);
+  const bicepCurlDownRef = useRef<boolean>(false);
+
+  // Utility: calculate the angle (in degrees) between three keypoints (A, B, C)
+  const calculateAngle = (
+    A: posedetection.Keypoint,
+    B: posedetection.Keypoint,
+    C: posedetection.Keypoint
+  ) => {
+    const angle =
+      Math.atan2(C.y - B.y, C.x - B.x) - Math.atan2(A.y - B.y, A.x - B.x);
+    let degree = Math.abs((angle * 180) / Math.PI);
+    if (degree > 180) degree = 360 - degree;
+    return degree;
+  };
 
   useEffect(() => {
     async function initDetector() {
@@ -36,12 +67,15 @@ export function useExerciseCounter() {
       const detectorConfig = {
         modelType: posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
       };
-      const detector = await posedetection.createDetector(posedetection.SupportedModels.MoveNet, detectorConfig);
+      const detector = await posedetection.createDetector(
+        posedetection.SupportedModels.MoveNet,
+        detectorConfig
+      );
       setPoseDetector(detector);
     }
     initDetector();
   }, []);
-  
+
   useEffect(() => {
     let stream: MediaStream | null = null;
     async function startCamera() {
@@ -49,135 +83,24 @@ export function useExerciseCounter() {
         try {
           stream = await navigator.mediaDevices.getUserMedia({ video: true });
           videoRef.current.srcObject = stream;
+          await videoRef.current.play();
         } catch (err) {
           console.error("Camera error:", err);
         }
       }
     }
     startCamera();
-    return () => { if (stream) stream.getTracks().forEach((track) => track.stop()); };
+    return () => {
+      if (stream) stream.getTracks().forEach((track) => track.stop());
+    };
   }, [enableDetection]);
-  
+
   useEffect(() => {
     if (enableDetection && !currExercise) {
       setCurrExercise("Squat");
     }
   }, [enableDetection, currExercise]);
-  
-  const checkPushUpForm = useCallback((pose: posedetection.Pose) => {
-    if (!pose.keypoints || pose.keypoints.length < 9) return;
-    const lShoulder = pose.keypoints[6];
-    const lElbow = pose.keypoints[8];
-    const rShoulder = pose.keypoints[5];
-    const rElbow = pose.keypoints[7];
-    if (
-      lShoulder.score! > 0.5 &&
-      lElbow.score! > 0.5 &&
-      rShoulder.score! > 0.5 &&
-      rElbow.score! > 0.5
-    ) {
-      const isDown = lShoulder.y > lElbow.y || rShoulder.y > rElbow.y;
-      const isUp = lShoulder.y <= lElbow.y && rShoulder.y <= rElbow.y;
-      if (isDown) {
-        pushDownRef.current++;
-      } else {
-        if (pushDownRef.current >= 3 && isUp) {
-          setExerciseCounts(prev => ({ ...prev, pushup: prev.pushup + 1 }));
-        }
-        pushDownRef.current = 0;
-      }
-    }
-  }, []);
-  
-  const checkPullUpForm = useCallback((pose: posedetection.Pose) => {
-    if (!pose.keypoints || pose.keypoints.length < 9) return;
-    const lShoulder = pose.keypoints[6];
-    const lElbow = pose.keypoints[8];
-    const rShoulder = pose.keypoints[5];
-    const rElbow = pose.keypoints[7];
-    if (
-      lShoulder.score! > 0.5 &&
-      lElbow.score! > 0.5 &&
-      rShoulder.score! > 0.5 &&
-      rElbow.score! > 0.5
-    ) {
-      const isDown = lShoulder.y > lElbow.y && rShoulder.y > rElbow.y;
-      const isUp = lShoulder.y <= lElbow.y && rShoulder.y <= rElbow.y;
-      if (isDown) {
-        setPullDownFrames(prev => prev + 1);
-      } else {
-        if (pullDownFrames >= 3 && isUp) {
-          setExerciseCounts(prev => ({ ...prev, pullup: prev.pullup + 1 }));
-        }
-        setPullDownFrames(0);
-      }
-    }
-  }, [pullDownFrames]);
-  
-  const checkSquatForm = useCallback((pose: posedetection.Pose) => {
-    if (!pose.keypoints || pose.keypoints.length < 15) return;
-    const lHip = pose.keypoints[11];
-    const lKnee = pose.keypoints[13];
-    const rHip = pose.keypoints[12];
-    const rKnee = pose.keypoints[14];
-    if (
-      lHip.score! > 0.5 &&
-      lKnee.score! > 0.5 &&
-      rHip.score! > 0.5 &&
-      rKnee.score! > 0.5
-    ) {
-      const isDown = lHip.y >= lKnee.y - 10 || rHip.y >= rKnee.y - 10;
-      const isUp = lHip.y < lKnee.y + 10 && rHip.y < rKnee.y + 10;
-      if (isDown) {
-        setSquatDownFrames(prev => prev + 1);
-      } else {
-        if (squatDownFrames >= 3 && isUp) {
-          setExerciseCounts(prev => ({ ...prev, squat: prev.squat + 1 }));
-        }
-        setSquatDownFrames(0);
-      }
-    }
-  }, [squatDownFrames]);
-  
-  const drawPose = useCallback((pose: posedetection.Pose) => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext("2d");
-    if (!ctx) return;
-    ctx.save();
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    ctx.translate(canvasRef.current.width, 0);
-    ctx.scale(-1, 1);
-    pose.keypoints.forEach((kp) => {
-      if (kp.score && kp.score > 0.5 && kp.x >= 0 && kp.y >= 0) {
-        ctx.beginPath();
-        ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = "red";
-        ctx.fill();
-      }
-    });
-    const adjacentPairs = posedetection.util.getAdjacentPairs(posedetection.SupportedModels.MoveNet);
-    adjacentPairs.forEach(([i, j]) => {
-      const kp1 = pose.keypoints[i];
-      const kp2 = pose.keypoints[j];
-      if (
-        kp1.score! > 0.5 &&
-        kp2.score! > 0.5 &&
-        kp1.x >= 0 &&
-        kp1.y >= 0 &&
-        kp2.x >= 0 &&
-        kp2.y >= 0
-      ) {
-        ctx.beginPath();
-        ctx.moveTo(kp1.x, kp1.y);
-        ctx.lineTo(kp2.x, kp2.y);
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-    });
-    ctx.restore();
-  }, []);
-  
+
   useEffect(() => {
     const interval = setInterval(async () => {
       if (!poseDetector || !enableDetection || !videoRef.current) return;
@@ -196,19 +119,172 @@ export function useExerciseCounter() {
       const poses = await poseDetector.estimatePoses(video);
       if (poses && poses.length > 0) {
         const pose = poses[0];
-        if (currExercise === "Push-Up") checkPushUpForm(pose);
-        if (currExercise === "Pull-Up") checkPullUpForm(pose);
-        if (currExercise === "Squat") checkSquatForm(pose);
+        if (currExercise) {
+          switch (currExercise) {
+            case "Push-Up": {
+              const leftAngle = calculateAngle(
+                pose.keypoints[5],
+                pose.keypoints[7],
+                pose.keypoints[9]
+              );
+              const rightAngle = calculateAngle(
+                pose.keypoints[6],
+                pose.keypoints[8],
+                pose.keypoints[10]
+              );
+              if (leftAngle < 90 && rightAngle < 90) {
+                pushUpDownRef.current = true;
+              }
+              if (pushUpDownRef.current && leftAngle > 160 && rightAngle > 160) {
+                setExerciseCounts((prev) => ({ ...prev, pushup: prev.pushup + 1 }));
+                pushUpDownRef.current = false;
+              }
+              break;
+            }
+            case "Pull-Up": {
+              const leftAngle = calculateAngle(
+                pose.keypoints[5],
+                pose.keypoints[7],
+                pose.keypoints[9]
+              );
+              const rightAngle = calculateAngle(
+                pose.keypoints[6],
+                pose.keypoints[8],
+                pose.keypoints[10]
+              );
+              if (leftAngle > 160 && rightAngle > 160) {
+                pullUpDownRef.current = true;
+              }
+              if (pullUpDownRef.current && leftAngle < 50 && rightAngle < 50) {
+                setExerciseCounts((prev) => ({ ...prev, pullup: prev.pullup + 1 }));
+                pullUpDownRef.current = false;
+              }
+              break;
+            }
+            case "Squat": {
+              const leftKneeAngle = calculateAngle(
+                pose.keypoints[11],
+                pose.keypoints[13],
+                pose.keypoints[15]
+              );
+              const rightKneeAngle = calculateAngle(
+                pose.keypoints[12],
+                pose.keypoints[14],
+                pose.keypoints[16]
+              );
+              if (leftKneeAngle < 90 && rightKneeAngle < 90) {
+                squatDownRef.current = true;
+              }
+              if (squatDownRef.current && leftKneeAngle > 160 && rightKneeAngle > 160) {
+                setExerciseCounts((prev) => ({ ...prev, squat: prev.squat + 1 }));
+                squatDownRef.current = false;
+              }
+              break;
+            }
+            case "Shoulder Press": {
+              const leftAngle = calculateAngle(
+                pose.keypoints[5],
+                pose.keypoints[7],
+                pose.keypoints[9]
+              );
+              const rightAngle = calculateAngle(
+                pose.keypoints[6],
+                pose.keypoints[8],
+                pose.keypoints[10]
+              );
+              if (leftAngle > 160 && rightAngle > 160) {
+                shoulderPressDownRef.current = true;
+              }
+              if (shoulderPressDownRef.current && (leftAngle < 90 || rightAngle < 90)) {
+                setExerciseCounts((prev) => ({
+                  ...prev,
+                  shoulderPress: prev.shoulderPress + 1,
+                }));
+                shoulderPressDownRef.current = false;
+              }
+              break;
+            }
+            case "Bicep Curl": {
+              const leftAngle = calculateAngle(
+                pose.keypoints[5],
+                pose.keypoints[7],
+                pose.keypoints[9]
+              );
+              const rightAngle = calculateAngle(
+                pose.keypoints[6],
+                pose.keypoints[8],
+                pose.keypoints[10]
+              );
+              if (leftAngle < 50 && rightAngle < 50) {
+                bicepCurlDownRef.current = true;
+              }
+              if (bicepCurlDownRef.current && leftAngle > 150 && rightAngle > 150) {
+                setExerciseCounts((prev) => ({
+                  ...prev,
+                  bicepCurl: prev.bicepCurl + 1,
+                }));
+                bicepCurlDownRef.current = false;
+              }
+              break;
+            }
+            default:
+              break;
+          }
+        }
         drawPose(pose);
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [poseDetector, enableDetection, currExercise, checkPushUpForm, checkPullUpForm, checkSquatForm]);
-  
-  const toggleCamera = () => {
-    setEnableDetection(prev => !prev);
-  };
-  
+  }, [poseDetector, enableDetection, currExercise, calculateAngle]);
+
+
+  const drawPose = useCallback((pose: posedetection.Pose) => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext("2d");
+    if (!ctx) return;
+    ctx.save();
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    const threshold = 0.3;
+    // Draw keypoints.
+    pose.keypoints.forEach((kp, index) => {
+      if (kp.score && kp.score > threshold && kp.x >= 0 && kp.y >= 0) {
+        ctx.beginPath();
+        // For wrists, draw larger blue circles.
+        if (index === 9 || index === 10) {
+          ctx.arc(kp.x, kp.y, 8, 0, 2 * Math.PI);
+          ctx.fillStyle = "blue";
+        } else {
+          ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = "red";
+        }
+        ctx.fill();
+      }
+    });
+    const adjacentPairs = posedetection.util.getAdjacentPairs(
+      posedetection.SupportedModels.MoveNet
+    );
+    adjacentPairs.forEach(([i, j]) => {
+      const kp1 = pose.keypoints[i];
+      const kp2 = pose.keypoints[j];
+      if (
+        kp1.score! > threshold &&
+        kp2.score! > threshold &&
+        kp1.x >= 0 &&
+        kp1.y >= 0 &&
+        kp2.x >= 0 &&
+        kp2.y >= 0
+      ) {
+        ctx.beginPath();
+        ctx.moveTo(kp1.x, kp1.y);
+        ctx.lineTo(kp2.x, kp2.y);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    });
+    ctx.restore();
+  }, []);
+
   useEffect(() => {
     if (totalReps > 0) {
       const newCalories = totalReps * 5;
@@ -222,15 +298,16 @@ export function useExerciseCounter() {
             calories: newCalories,
             tokens: newTokens,
           }),
-        }
-      
-      ).catch(err => console.error(err));
-      // console.log("Updated calories and tokens", newCalories, newTokens, session?.user?.email);
+        }).catch((err) => console.error(err));
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [exerciseCounts, totalReps]);
-  
+  }, [exerciseCounts, totalReps, session]);
+
+  const toggleCamera = () => {
+    setEnableDetection((prev) => !prev);
+  };
+
   return {
     exerciseCounts,
     totalReps,
