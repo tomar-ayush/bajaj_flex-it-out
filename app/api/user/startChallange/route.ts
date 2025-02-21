@@ -42,11 +42,17 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		user.challenges.push({
+		console.log("db saving started")
+
+		const newChallenge: IUserChallenge = {
 			challengeId,
 			startedAt: new Date(),
-			progress: 0,
-		});
+			progress: 0
+		};
+
+		user.challenges.push(newChallenge);
+
+		console.log(await user.challenges)
 
 		await user.save();
 

@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Sidebar } from './sidebar';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 
 const challenges = [
   {
     id: '110',
     title: '5 Rep Challenge',
+    reps: 5,
     description: 'Complete 5 reps of each exercise',
     exercises: ['Push-ups', 'Squats', 'Burpees'],
     reward: 100,
@@ -20,6 +22,7 @@ const challenges = [
   {
     id: '111',
     title: '10 Rep Challenge',
+    reps: 10,
     description: 'Complete 10 reps of each exercise',
     exercises: ['Push-ups', 'Squats', 'Lunges', 'Sit-ups'],
     reward: 250,
@@ -30,6 +33,7 @@ const challenges = [
   {
     id: '112',
     title: '20 Rep Challenge',
+    reps: 20,
     description: 'Complete 20 reps of each exercise',
     exercises: ['Push-ups', 'Squats', 'Burpees', 'Mountain Climbers'],
     reward: 500,
@@ -40,6 +44,7 @@ const challenges = [
   {
     id: '113',
     title: '30 Rep Challenge',
+    reps: 30,
     description: 'Complete 30 reps of each exercise',
     exercises: ['Push-ups', 'Squats', 'Burpees', 'Planks', 'Jump Rope'],
     reward: 1000,
@@ -53,27 +58,27 @@ export default function ChallengesDashboard() {
 
   const { data: session } = useSession();
 
+  const [reps, setReps] = useState(0)
+
   const startChallange = async (challengeId: string) => {
-    try {
-      console.log(session);
-      const response = await fetch('/api/start-challenge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session?.user.email, challengeId }),
-      });
-      const result = await response.json();
 
-      //logic to be added soon
+    const email = session?.user.email;
 
-      if (response.ok) {
-        alert('Challenge started successfully!');
-      } else {
-        alert(result.message || 'Error starting challenge');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error starting challenge');
+    if (!email) {
+      throw new Error('No user email found');
     }
+
+    //get calories from the user 
+    const response = await fetch(`/api/getCurrUser?email=${encodeURIComponent(email)}`);
+
+    //update cahllanges based on the calories burned and calculate current reps
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const data = await response.json();
+    setReps(data / 5);
+
   };
 
   return (
@@ -128,8 +133,8 @@ export default function ChallengesDashboard() {
                   </span>
                 </div>
                 <Link href="/dashboard">
-                  <Button className="mt-4 w-full" onClick={() => startChallange(challenge.id)} >
-                    Start Challenge</Button>
+                  <Button className="mt-4 w-full" disabled={reps > challenge.reps} onClick={() => startChallange(challenge.id)} >
+                    {reps >= challenge.reps ? "Challenge completed" : "Start Challenge"}</Button>
                 </Link>
               </Card>
             ))}
