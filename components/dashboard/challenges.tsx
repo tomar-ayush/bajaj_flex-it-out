@@ -1,11 +1,14 @@
+"use client"
 import { Card } from '@/components/ui/card';
 import { Trophy, Gift, Timer, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sidebar } from './sidebar';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 const challenges = [
   {
+    id: '110',
     title: '5 Rep Challenge',
     description: 'Complete 5 reps of each exercise',
     exercises: ['Push-ups', 'Squats', 'Burpees'],
@@ -15,6 +18,7 @@ const challenges = [
     icon: Dumbbell,
   },
   {
+    id: '111',
     title: '10 Rep Challenge',
     description: 'Complete 10 reps of each exercise',
     exercises: ['Push-ups', 'Squats', 'Lunges', 'Sit-ups'],
@@ -24,6 +28,7 @@ const challenges = [
     icon: Timer,
   },
   {
+    id: '112',
     title: '20 Rep Challenge',
     description: 'Complete 20 reps of each exercise',
     exercises: ['Push-ups', 'Squats', 'Burpees', 'Mountain Climbers'],
@@ -33,6 +38,7 @@ const challenges = [
     icon: Trophy,
   },
   {
+    id: '113',
     title: '30 Rep Challenge',
     description: 'Complete 30 reps of each exercise',
     exercises: ['Push-ups', 'Squats', 'Burpees', 'Planks', 'Jump Rope'],
@@ -44,11 +50,37 @@ const challenges = [
 ];
 
 export default function ChallengesDashboard() {
+
+  const { data: session } = useSession();
+
+  const startChallange = async (challengeId: string) => {
+    try {
+      console.log(session);
+      const response = await fetch('/api/start-challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: session?.user.email, challengeId }),
+      });
+      const result = await response.json();
+
+      //logic to be added soon
+
+      if (response.ok) {
+        alert('Challenge started successfully!');
+      } else {
+        alert(result.message || 'Error starting challenge');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error starting challenge');
+    }
+  };
+
   return (
     <div className="block sm:flex h-screen bg-background">
-     <div className="w-[100%] sm:w-64 block">
-             <Sidebar />
-           </div>
+      <div className="w-[100%] sm:w-64 block">
+        <Sidebar />
+      </div>
       <main className="flex-1 overflow-y-auto p-8">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8">
@@ -96,9 +128,9 @@ export default function ChallengesDashboard() {
                   </span>
                 </div>
                 <Link href="/dashboard">
-                <Button className="mt-4 w-full">
-                  Start Challenge</Button>
-                  </Link>
+                  <Button className="mt-4 w-full" onClick={() => startChallange(challenge.id)} >
+                    Start Challenge</Button>
+                </Link>
               </Card>
             ))}
           </div>

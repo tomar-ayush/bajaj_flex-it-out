@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ message: 'User not found' }, { status: 400 });
 		}
 
-		// Ensure the challenges array exists
 		if (!user.challenges) {
 			user.challenges = [];
 		}
