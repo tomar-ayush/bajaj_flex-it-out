@@ -15,6 +15,7 @@ export function LiveTracking() {
     toggleCamera,
     currExercise,
     setCurrExercise,
+    liveFeedback,
   } = useExerciseCounter();
 
   const startAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -41,7 +42,7 @@ export function LiveTracking() {
             .play()
             .catch((err) => console.error("Milestone Audio Error:", err));
         }
-        toast({ title: `Milestone: ${count} ${name}(s)!`, variant: "success" });
+        toast({ title: `Milestone: ${count} ${name}s!`, variant: "success" });
       }
     };
     checkMilestone("Squat", exerciseCounts.squat);
@@ -122,6 +123,9 @@ export function LiveTracking() {
       </div>
 
       <div className="relative bg-black mx-auto w-full aspect-video">
+        <div className="absolute top-2 left-2 z-10 bg-black bg-opacity-50 px-2 py-1 rounded text-green-500 text-sm">
+          {liveFeedback}
+        </div>
         <video
           ref={videoRef}
           autoPlay
@@ -134,6 +138,5 @@ export function LiveTracking() {
     </Card>
   );
 }
-
 
 export default LiveTracking;
