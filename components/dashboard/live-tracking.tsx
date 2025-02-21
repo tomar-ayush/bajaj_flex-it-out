@@ -64,7 +64,7 @@ export function LiveTracking() {
   return (
     <Card className="overflow-hidden">
       <audio ref={startAudioRef} src="/start.mp3" preload="auto" />
-      <audio ref={milestoneAudioRef} src="/milestone.mp3" preload="auto" />
+      <audio ref={milestoneAudioRef} src="/start.mp3" preload="auto" />
 
       <div className="border-b p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
