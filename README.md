@@ -19,6 +19,7 @@ Flex It Out is an innovative platform designed to engage users in daily challeng
 - **Database**: MongoDB
 - **Authentication**: NextAuth, Google OAuth, JWT-based Email OTP
 - **Email Service**: Nodemailer
+- **AI Pose Detection**: TensorFlow.js (MoveNet)
 - **Deployment**: Vercel, GitHub
 
 ## Getting Started
