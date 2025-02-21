@@ -10,6 +10,7 @@ import {
   Rocket,
   Settings,
   Trophy,
+  Upload,
   User,
   X
 } from "lucide-react";
@@ -25,7 +26,9 @@ const navigation = [
   { name: "Daily Challenges", href: "/dashboard/challenges", icon: Rocket },
   { name: "Rewards Store", href: "/dashboard/rewards", icon: Gift },
   { name: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy },
+  { name: "Add Pose", href: "/dashboard/addpose", icon: Upload },
   { name: "Settings", href: "/dashboard/profile", icon: Settings },
+
 ];
 
 export function Sidebar() {
