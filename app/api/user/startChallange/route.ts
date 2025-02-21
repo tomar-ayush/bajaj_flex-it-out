@@ -1,28 +1,46 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/utils/db';
-import { User } from '@/models/user';
+import { User, IUserChallenge } from '@/models/user';
 
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
-
+export async function POST(req: NextRequest) {
 	await connectDB();
 
-	const { userId, challengeId, email } = req.body;
+	let body;
+	try {
+		body = await req.json();
+	} catch (error) {
+		return NextResponse.json({ message: 'Invalid JSON' }, { status: 400 });
+	}
+
+	const { challengeId, email } = body;
 
 	if (!email || !challengeId) {
-		return res.status(400).json({ message: 'Missing userId or challengeId' });
+		return NextResponse.json({ message: 'Missing email or challengeId' }, { status: 400 });
 	}
 
 	try {
-		const user = await User.findOne({ email: email });
+		const user = await User.findOne({ email });
 		if (!user) {
-			return res.status(404).json({ message: 'User not found' });
+			return NextResponse.json({ message: 'User not found' }, { status: 400 });
+		}
+
+		// Ensure the challenges array exists
+		if (!user.challenges) {
+			user.challenges = [];
 		}
 
 		const existingChallenge = user.challenges.find(
-			(ch) => ch.challengeId === challengeId
+			(ch: IUserChallenge) => ch.challengeId === challengeId
 		);
 		if (existingChallenge) {
-			return res.status(200).json({ message: 'Challenge already started', status: "existing", challange: user.challenge });
+			return NextResponse.json(
+				{
+					message: 'Challenge already started',
+					status: 'existing',
+					challenges: user.challenges,
+				},
+				{ status: 200 }
+			);
 		}
 
 		user.challenges.push({
@@ -33,10 +51,17 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
 
 		await user.save();
 
-		return res
-			.status(200)
-			.json({ message: 'Challenge started successfully', challenge: { challengeId, startedAt: new Date(), progress: 0 } });
+		return NextResponse.json(
+			{
+				message: 'Challenge started successfully',
+				challenge: { challengeId, startedAt: new Date(), progress: 0 },
+			},
+			{ status: 200 }
+		);
 	} catch (error: any) {
-		return res.status(500).json({ message: 'Server error', error: error.message });
+		return NextResponse.json(
+			{ message: 'Server error', error: error.message },
+			{ status: 400 }
+		);
 	}
 }
