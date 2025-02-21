@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Sidebar } from './sidebar';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { use, useEffect, useState } from 'react';
 
 const challenges = [
   {
@@ -56,30 +56,35 @@ const challenges = [
 
 export default function ChallengesDashboard() {
 
+  const [userEmail, setUserEmail] = useState("");
+
   const { data: session } = useSession();
 
   const [reps, setReps] = useState(0)
 
-  const startChallange = async (challengeId: string) => {
+  useEffect(() => {
+    async function fun() {
 
-    const email = session?.user.email;
 
-    if (!email) {
-      throw new Error('No user email found');
+      const email = session?.user?.email;
+      console.log(session?.user.email)
+
+      if (!email) {
+        throw new Error('No user email found');
+      }
+
+      const response = await fetch(`/api/getCurrUser?email=${encodeURIComponent(email)}`);
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setReps(data.data.user.calories / 5);
     }
+    fun();
 
-    //get calories from the user 
-    const response = await fetch(`/api/getCurrUser?email=${encodeURIComponent(email)}`);
-
-    //update cahllanges based on the calories burned and calculate current reps
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-
-    const data = await response.json();
-    setReps(data / 5);
-
-  };
+  }, [session])
 
   return (
     <div className="block sm:flex h-screen bg-background">
@@ -133,7 +138,7 @@ export default function ChallengesDashboard() {
                   </span>
                 </div>
                 <Link href="/dashboard">
-                  <Button className="mt-4 w-full" disabled={reps > challenge.reps} onClick={() => startChallange(challenge.id)} >
+                  <Button className="mt-4 w-full" disabled={reps >= challenge.reps}  >
                     {reps >= challenge.reps ? "Challenge completed" : "Start Challenge"}</Button>
                 </Link>
               </Card>
