@@ -14,7 +14,6 @@ export default function PoseCreation() {
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Initialize the pose detector.
   useEffect(() => {
     async function initDetector() {
       await tf.ready();
@@ -28,7 +27,6 @@ export default function PoseCreation() {
     initDetector();
   }, []);
 
-  // Handle image upload.
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -38,7 +36,6 @@ export default function PoseCreation() {
     }
   };
 
-  // Run pose detection on the loaded image.
   const detectPoseFromImage = useCallback(async () => {
     if (!detector || !imageRef.current) return;
     try {
@@ -55,21 +52,16 @@ export default function PoseCreation() {
     }
   }, [detector]);
 
-  // Draw the image, pose keypoints and skeleton on the canvas.
   const drawPose = useCallback(() => {
     if (!canvasRef.current || !imageRef.current) return;
     const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
 
-    // Clear previous drawings.
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-    // Draw image.
     ctx.drawImage(imageRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
 
-    // If pose data exists, draw keypoints and skeleton.
     if (poseData) {
-      // Draw keypoints.
       poseData.keypoints.forEach((kp) => {
         if (kp.score && kp.score > 0.5 && kp.x >= 0 && kp.y >= 0) {
           ctx.beginPath();
@@ -78,7 +70,6 @@ export default function PoseCreation() {
           ctx.fill();
         }
       });
-      // Draw skeleton.
       const adjacentPairs = posedetection.util.getAdjacentPairs(posedetection.SupportedModels.MoveNet);
       adjacentPairs.forEach(([i, j]) => {
         const kp1 = poseData.keypoints[i];
@@ -102,7 +93,6 @@ export default function PoseCreation() {
     }
   }, [poseData]);
 
-  // Redraw the canvas whenever the image or pose data updates.
   useEffect(() => {
     if (imageURL) {
       const image = new Image();
@@ -120,17 +110,14 @@ export default function PoseCreation() {
     }
   }, [imageURL, drawPose]);
 
-  // Redraw when poseData change.
   useEffect(() => {
     if (imageURL) {
       drawPose();
     }
   }, [poseData, imageURL, drawPose]);
 
-  // Save pose action; implement saving logic as needed.
   const handleSavePose = () => {
     if (poseData) {
-      // Here you could send poseData to your API or store it.
       console.log("Pose data to be saved:", poseData);
       toast({ title: "Pose saved!", variant: "success" });
     } else {
